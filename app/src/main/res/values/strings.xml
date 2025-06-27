@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Memorize Verses</string>
+
+    <string name="add">Add</string>
+
+    <string name="book">Book</string>
+    <string name="chapter">Chapter</string>
+    <string name="verse_number">Verse Number</string>
+    <string name="verse_text">Verse Text</string>
+    <string name="add_verse_text">Add Verse</string>
+    <string name="no_text">No Text</string>
+</resources>
