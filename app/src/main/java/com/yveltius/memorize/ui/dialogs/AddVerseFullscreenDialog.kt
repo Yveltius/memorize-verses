@@ -68,6 +68,7 @@ fun AddVerseFullscreenDialog(
                                 tags = listOf()
                             )
                         )
+                        onDismissRequest()
                     },
                     onDismissRequest = onDismissRequest
                 )
