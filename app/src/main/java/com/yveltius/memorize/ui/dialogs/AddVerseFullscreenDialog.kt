@@ -37,15 +37,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yveltius.memorize.R
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
+import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 
 @Composable
 fun AddVerseFullscreenDialog(
-    onAddVerseRequest: () -> Unit,
+    onAddVerseRequest: (Verse) -> Unit,
     onDismissRequest: () -> Unit = {}
 ) {
     var book: String by remember { mutableStateOf("") }
-    var chapter: Int? by remember { mutableStateOf(null) }
+    var chapter: String by remember { mutableStateOf("") }
     var verseNumberAndTextList: List<AddVerseNumberAndText> by remember { mutableStateOf(listOf()) }
 
     FullscreenDialog(
@@ -58,7 +59,16 @@ fun AddVerseFullscreenDialog(
                 modifier = Modifier.fillMaxSize()
             ) {
                 TopBar(
-                    onAddVerseRequest = onAddVerseRequest,
+                    onAddVerseRequest = {
+                        onAddVerseRequest(
+                            Verse(
+                                book = book,
+                                chapter = chapter.toInt(),
+                                verseText = verseNumberAndTextList.map { it.transform() },
+                                tags = listOf()
+                            )
+                        )
+                    },
                     onDismissRequest = onDismissRequest
                 )
 
@@ -67,7 +77,7 @@ fun AddVerseFullscreenDialog(
                     onBookChanged = { newBook -> book = newBook },
                     chapter = chapter,
                     onChapterChanged = { newChapterString ->
-                        chapter = newChapterString.toIntOrNull() ?: 0
+                        chapter = newChapterString
                     },
                     verseNumberAndTextList = verseNumberAndTextList,
                     onVerseNumberChanged = { index, verseNumber ->
@@ -89,9 +99,10 @@ fun AddVerseFullscreenDialog(
                         verseNumberAndTextList = verseNumberAndTextList + AddVerseNumberAndText()
                     },
                     onDeleteVerseNumberAndText = { index ->
-                        verseNumberAndTextList = verseNumberAndTextList.filterIndexed { listIndex, _ ->
-                            index != listIndex
-                        }
+                        verseNumberAndTextList =
+                            verseNumberAndTextList.filterIndexed { listIndex, _ ->
+                                index != listIndex
+                            }
                     }
                 )
             }
@@ -130,7 +141,7 @@ fun TopBar(
 private fun VerseForm(
     book: String,
     onBookChanged: (String) -> Unit,
-    chapter: Int?,
+    chapter: String,
     onChapterChanged: (String) -> Unit,
     verseNumberAndTextList: List<AddVerseNumberAndText>,
     onVerseNumberChanged: (index: Int, String) -> Unit,
@@ -194,7 +205,7 @@ private fun VerseForm(
 private fun BookAndChapter(
     book: String,
     onBookChanged: (String) -> Unit,
-    chapter: Int?,
+    chapter: String,
     onChapterChanged: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -216,7 +227,7 @@ private fun BookAndChapter(
             modifier = Modifier.weight(0.6f)
         )
         OutlinedTextField(
-            value = chapter?.toString() ?: "",
+            value = chapter,
             onValueChange = onChapterChanged,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
@@ -228,6 +239,7 @@ private fun BookAndChapter(
                     overflow = TextOverflow.Ellipsis
                 )
             },
+            isError = chapter.toIntOrNull() == null && chapter.isNotEmpty(),
             modifier = Modifier.weight(0.4f)
         )
     }

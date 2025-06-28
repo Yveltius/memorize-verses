@@ -17,12 +17,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,14 +40,14 @@ import org.koin.androidx.compose.koinViewModel
 fun VerseListScreen(
     versesListViewModel: VersesListViewModel = koinViewModel()
 ) {
-    val uiState by versesListViewModel.uiState
+    val uiState by versesListViewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(value = false) }
 
     LaunchedEffect(Unit) { versesListViewModel.getVerses() }
 
     when {
         showDialog -> AddVerseFullscreenDialog(
-            onAddVerseRequest = {},
+            onAddVerseRequest = versesListViewModel::addVerse,
             onDismissRequest = { showDialog = false }
         )
 
@@ -120,18 +122,19 @@ fun VerseView(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(text = "${verse.book} ${verse.chapter}")
+            Text(text = "${verse.book} ${verse.chapter}:${verse.getVerseNumberString()}")
             Text(
                 text = buildAnnotatedVerse(verseNumberAndTexts = verse.verseText),
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
             Text(
-                text = verse.tags.toString()/*verse.getFormattedTags()*/,
+                text = if (verse.tags.isNotEmpty()) verse.tags.toString() else "No Tags"/*verse.getFormattedTags()*/,
                 modifier = Modifier
                     .fillMaxWidth(0.75f)
                     .align(Alignment.End),
                 overflow = TextOverflow.Ellipsis,
-                maxLines = 1
+                maxLines = 1,
+                textAlign = TextAlign.End
             )
         }
     }
@@ -186,6 +189,34 @@ private fun VerseViewPreviewDark() {
                 )
             ),
             tags = listOf("Discipleship Verse", "Obedience to Christ", "Romans")
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    )
+}
+
+@Preview(
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL
+)
+@Composable
+private fun VerseViewPreviewDarkNoTags() {
+    VerseView(
+        verse = Verse(
+            book = "Romans",
+            chapter = 12,
+            verseText = listOf(
+                VerseNumberAndText(
+                    verseNumber = 1,
+                    text = "Therefore, brothers, I urge you, by the mercies of God, to present your bodies as a living sacrifice - holy and pleasing to God. This is your spiritual worship."
+                ),
+                VerseNumberAndText(
+                    verseNumber = 2,
+                    text = "Do not be conformed to this age, but be transformed by the renewing of your mind, so that you may discern what is the good, please, and perfect will of God."
+                )
+            ),
+            tags = listOf()
         ),
         modifier = Modifier
             .fillMaxWidth()

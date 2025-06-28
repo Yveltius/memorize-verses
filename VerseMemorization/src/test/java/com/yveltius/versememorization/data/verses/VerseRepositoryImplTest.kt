@@ -8,7 +8,6 @@ import com.yveltius.versememorization.entity.util.toJsonString
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -17,6 +16,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 
@@ -28,11 +28,18 @@ class VerseRepositoryImplTest {
             modules(
                 module {
                     single<Log> { VerseMemorizationLog() }
-                    single<JsonFileReader> { JsonFileReaderTestImpl() }
+                    single<JsonFileReader>(named("notEmpty")) { JsonFileReaderTestImpl() }
+                    single<JsonFileReader>(named("Empty")) { EmptyJsonFileReaderTestImpl() }
                     single<VerseRepository> {
                         VerseRepositoryImpl(
                             log = get(),
-                            jsonFileReader = get()
+                            jsonFileReader = get(named("notEmpty"))
+                        )
+                    }
+                    single<VerseRepository>(named("Empty")) {
+                        VerseRepositoryImpl(
+                            log = get(),
+                            jsonFileReader = get(named("Empty"))
                         )
                     }
                 }
@@ -64,7 +71,8 @@ class VerseRepositoryImplTest {
     fun `get verses given book ignore case`() {
         val verseRepository: VerseRepository by inject(VerseRepository::class.java)
 
-        val filteredVerses = runBlocking { verseRepository.getVerses(book = "hEbReWs").getOrThrow() }
+        val filteredVerses =
+            runBlocking { verseRepository.getVerses(book = "hEbReWs").getOrThrow() }
 
         val expected = 1
         val actual = filteredVerses.count()
@@ -220,6 +228,7 @@ class VerseRepositoryImplTest {
             actual == expected
         )
     }
+
     @Test
     fun `partial text match ignore case`() {
         val verseRepository: VerseRepository by inject(VerseRepository::class.java)
@@ -236,6 +245,13 @@ class VerseRepositoryImplTest {
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
+    }
+
+    @Test
+    fun `initial read from empty or non-existent file should return empty list`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java, named("Empty"))
+        runBlocking { verseRepository.getVerses().getOrThrow() }
+        Assert.assertTrue(true)
     }
     //endregion
 
@@ -274,6 +290,71 @@ class VerseRepositoryImplTest {
         Assert.assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
+        )
+    }
+    //endregion
+
+    //region addVerse
+    @Test
+    fun `added verse causes verse count to increment by 1`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        val versesBeforeAddition = runBlocking { verseRepository.getVerses().getOrThrow() }
+
+        runBlocking {
+            verseRepository.addVerse(
+                verse = Verse(
+                    book = "John",
+                    chapter = 15,
+                    verseText = listOf(
+                        VerseNumberAndText(
+                            verseNumber = 7,
+                            text = "If you remain in Me, and My words remain in you, ask whatever you want and it will be done for you."
+                        )
+                    ),
+                    tags = listOf("Discipleship Verses", "Prayer")
+                )
+            )
+        }
+
+        val versesAfterAddition = runBlocking { verseRepository.getVerses().getOrThrow() }
+
+        val expected = versesBeforeAddition.size + 1
+        val actual = versesAfterAddition.size
+        Assert.assertTrue(
+            "Expected verse count: $expected, actual: $actual",
+            actual == expected
+        )
+    }
+
+    @Test
+    fun `added verse shows up in repo`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        val verse = Verse(
+            book = "John",
+            chapter = 15,
+            verseText = listOf(
+                VerseNumberAndText(
+                    verseNumber = 7,
+                    text = "If you remain in Me, and My words remain in you, ask whatever you want and it will be done for you."
+                )
+            ),
+            tags = listOf("Discipleship Verses", "Prayer")
+        )
+
+        runBlocking {
+            verseRepository.addVerse(
+                verse = verse
+            )
+        }
+
+        val expected = runBlocking {
+            verseRepository.getVerses(book = "John", chapter = 15, verseNumber = 7).getOrThrow().first()
+        }
+        Assert.assertTrue(
+            "Expected verse count: $expected, actual: $verse",
+            verse == expected
         )
     }
     //endregion
@@ -411,5 +492,16 @@ class VerseRepositoryImplTest {
 
             return Result.success(Unit)
         }
+    }
+
+    class EmptyJsonFileReaderTestImpl : JsonFileReader {
+        override suspend fun readFromJsonFile(fileName: String): Result<String> {
+            return Result.success("")
+        }
+
+        override suspend fun writeToJsonFile(fileName: String, content: String): Result<Unit> {
+            TODO("Not yet implemented")
+        }
+
     }
 }

@@ -22,16 +22,19 @@ internal class JsonFileReaderImpl(
                     tag = logTag,
                     message = "File($fileName) didn't exist so it was created."
                 )
+
+                "" // the file is fresh so its empty, no need to attempt a read
+            } else {
+
+                val fileContents = file.readText()
+
+                log.debug(
+                    tag = logTag,
+                    message = "Successfully read content($fileContents) from File($fileName)."
+                )
+
+                fileContents
             }
-
-            val fileContents = file.readText()
-
-            log.debug(
-                tag = logTag,
-                message = "Successfully read content($fileContents) from File($fileName)."
-            )
-
-            fileContents
         }
     }
 

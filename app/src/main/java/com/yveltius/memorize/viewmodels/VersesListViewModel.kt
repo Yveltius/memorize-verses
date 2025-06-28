@@ -1,32 +1,30 @@
 package com.yveltius.memorize.viewmodels
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yveltius.versememorization.domain.verses.AddVersesUseCase
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.entity.verses.Verse
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 
-class VersesListViewModel: ViewModel() {
+class VersesListViewModel : ViewModel() {
     private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
+    private val addVersesUseCase: AddVersesUseCase by inject(AddVersesUseCase::class.java)
 
-    private val _uiState: MutableState<UiState> = mutableStateOf(value = UiState())
-    val uiState: State<UiState> = _uiState
-
-    private var _verses: List<Verse> = listOf()
-    private val verses: List<Verse>
-        get() = _verses
+    private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(value = UiState())
+    val uiState: StateFlow<UiState> = _uiState
 
     fun getVerses() {
         viewModelScope.launch {
             getVersesUseCase.getVerses()
                 .onSuccess { verses ->
-                    this@VersesListViewModel._verses = verses
-
-                    updateUiState()
+                    _uiState.update {
+                        it.copy(verses = verses)
+                    }
                 }
                 .onFailure {
                     // todo display fetch error
@@ -34,10 +32,15 @@ class VersesListViewModel: ViewModel() {
         }
     }
 
-    private fun updateUiState() {
-        _uiState.value = UiState(
-            verses = verses
-        )
+    fun addVerse(verse: Verse) {
+        viewModelScope.launch {
+            addVersesUseCase.addVerse(verse = verse)
+                .onSuccess {
+                    getVerses()
+                }.onFailure {
+                    // todo display save error
+                }
+        }
     }
 
     data class UiState(

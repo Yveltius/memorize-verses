@@ -104,7 +104,11 @@ internal class VerseRepositoryImpl(
                 message = "Successfully retrieved verses($versesJsonString) from File($VERSES_FILE_NAME)."
             )
 
-            versesJsonString.fromJsonString<List<Verse>>()
+            if (versesJsonString.isNotEmpty()) {
+                versesJsonString.fromJsonString<List<Verse>>()
+            } else {
+                listOf()
+            }
         }
     }
 
