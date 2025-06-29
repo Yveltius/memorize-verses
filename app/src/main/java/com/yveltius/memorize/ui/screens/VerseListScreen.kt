@@ -1,6 +1,8 @@
 package com.yveltius.memorize.ui.screens
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,7 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
@@ -64,23 +70,27 @@ fun MainView(
     uiState: VersesListViewModel.UiState,
     onFabClick: () -> Unit
 ) {
+    val lazyListState = rememberLazyListState()
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onFabClick,
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = null
-                )
+            AnimatedVisibility(visible = lazyListState.lastScrolledBackward || !lazyListState.canScrollBackward) {
+                FloatingActionButton(
+                    onClick = onFabClick,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = null
+                    )
+                }
             }
         }
     ) { contentPadding ->
         Content(
             verses = uiState.verses,
             contentPadding = contentPadding,
+            lazyListState = lazyListState,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -92,12 +102,14 @@ fun MainView(
 fun Content(
     verses: List<Verse>,
     contentPadding: PaddingValues,
+    lazyListState: LazyListState,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier,
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        state = lazyListState
     ) {
         items(verses) { verse ->
             VerseView(
