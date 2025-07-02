@@ -44,25 +44,16 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun VerseListScreen(
+    onAddVerse: () -> Unit,
     versesListViewModel: VersesListViewModel = koinViewModel()
 ) {
     val uiState by versesListViewModel.uiState.collectAsState()
-    var showDialog by remember { mutableStateOf(value = false) }
 
     LaunchedEffect(Unit) { versesListViewModel.getVerses() }
-
-    when {
-        showDialog -> AddVerseFullscreenDialog(
-            onAddVerseRequest = versesListViewModel::addVerse,
-            onDismissRequest = { showDialog = false }
-        )
-
-        else -> MainView(
-            uiState = uiState,
-            onFabClick = { showDialog = true }
-        )
-    }
-
+    MainView(
+        uiState = uiState,
+        onFabClick = onAddVerse
+    )
 }
 
 @Composable
