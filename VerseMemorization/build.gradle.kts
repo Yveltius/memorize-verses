@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.yveltius.versememorization"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
@@ -34,29 +34,24 @@ android {
 }
 
 dependencies {
-    val koinVersion = "4.0.2"
-    val coroutinesVersion = "1.10.1"
-
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation(libs.androidx.core.core.ktx)
+    implementation(libs.kotlinx.serialization.json)
 
     // Koin
-    implementation("io.insert-koin:koin-core:$koinVersion")
-    implementation("io.insert-koin:koin-core-coroutines:$koinVersion")
+    implementation(libs.koin.core)
+    implementation(libs.koin.core.coroutines)
 
     // Koin Test features
-    testImplementation("io.insert-koin:koin-test:$koinVersion")
+    testImplementation(libs.koin.test)
     // Koin for JUnit 4
-    testImplementation("io.insert-koin:koin-test-junit4:$koinVersion")
+    testImplementation(libs.koin.test.junit4)
     // Koin for JUnit 5
-    testImplementation("io.insert-koin:koin-test-junit5:$koinVersion")
+    testImplementation(libs.insert.koin.koin.test.junit5)
 
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.3")
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter)
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.1.0")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation(libs.androidx.junit)
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }
