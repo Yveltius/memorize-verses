@@ -122,8 +122,13 @@ class AddVerseViewModel : ViewModel() {
             .value
             .verseNumberAndTextList
             .any { it.verseNumber.toIntOrNull() == null }
+        val foundErrorInVerseText = uiState
+            .value
+            .verseNumberAndTextList
+            .any { it.verseText.isEmpty() }
+        val bookErrorFound = uiState.value.book.isEmpty()
 
-        if (chapterErrorFound || foundErrorInVerseNumbers)
+        if (chapterErrorFound || foundErrorInVerseNumbers || foundErrorInVerseText || bookErrorFound)
             return Result.failure(Throwable("Failed to convert chapter or verse number to int. Check your inputs."))
 
         return Result.success(

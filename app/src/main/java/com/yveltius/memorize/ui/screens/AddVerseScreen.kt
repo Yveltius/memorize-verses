@@ -269,6 +269,11 @@ private fun BookAndChapter(
             label = {
                 Text(text = stringResource(R.string.book))
             },
+            supportingText = {
+                if (book.isEmpty()) {
+                    Text(text = stringResource(R.string.input_cant_be_empty))
+                }
+            },
             modifier = Modifier.weight(0.6f)
         )
         OutlinedTextField(
@@ -352,6 +357,11 @@ private fun EditableVerseNumberAndText(
             ),
             label = {
                 Text(text = stringResource(R.string.verse_text))
+            },
+            supportingText = {
+                if (verseNumberAndText.verseText.isEmpty()) {
+                    Text(text = stringResource(R.string.input_cant_be_empty))
+                }
             },
             modifier = Modifier.fillMaxWidth()
         )

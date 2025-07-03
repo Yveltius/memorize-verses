@@ -13,4 +13,5 @@
     <string name="snackbar_saved_verse">Successfully saved %1$s.</string>
 
     <string name="input_error">Please check your input.</string>
+    <string name="input_cant_be_empty">Input cannot be empty.</string>
 </resources>
