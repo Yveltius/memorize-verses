@@ -12,10 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -29,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -125,7 +122,7 @@ fun TopBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Filled.Close,
+            painter = painterResource(R.drawable.outline_close_24),
             contentDescription = null,
             modifier = Modifier.clickable { onDismissRequest() }
         )
@@ -194,7 +191,7 @@ private fun VerseForm(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row {
-                    Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+                    Icon(painter = painterResource(R.drawable.outline_add_24), contentDescription = null)
                     Text(text = stringResource(R.string.add_verse_text))
                 }
             }
@@ -269,7 +266,7 @@ private fun EditableVerseNumberAndText(
                 maxLines = 1
             )
             Icon(
-                imageVector = Icons.Filled.Delete,
+                painter = painterResource(R.drawable.outline_delete_24),
                 contentDescription = null,
                 modifier = Modifier.clickable { onDeleteVerseNumberAndText(index) })
         }

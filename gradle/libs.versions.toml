@@ -14,7 +14,7 @@ lifecycleRuntimeKtx = "2.9.1"
 navigationComposeAndroid = "2.9.0"
 coreKtx = "1.16.0"
 koin = "4.1.0"
-
+material3 = "1.4.0-alpha17"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -24,7 +24,8 @@ androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", vers
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junitVersion" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationComposeAndroid" }
-androidx-material3 = { module = "androidx.compose.material3:material3" }
+androidx-material3-module = { module = "androidx.compose.material3:material3" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-navigation-compose-android = { group = "androidx.navigation", name = "navigation-compose-android", version.ref = "navigationComposeAndroid" }
 androidx-core-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
@@ -39,9 +40,9 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jun
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
 koin-core-coroutines = { group = "io.insert-koin", name = "koin-core-coroutines", version.ref = "koin" }
 koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
-koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koin"}
-koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koin"}
-koin-test-junit5 = { group = "io.insert-koin", name = "koin-test-juint5", version.ref = "koin"}
+koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koin" }
+koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koin" }
+koin-test-junit5 = { group = "io.insert-koin", name = "koin-test-juint5", version.ref = "koin" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesVersion" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 

@@ -1,5 +1,6 @@
 package com.yveltius.memorize.ui.screens
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,21 +12,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.ToggleFloatingActionButton
+import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -35,7 +44,7 @@ import com.yveltius.memorize.R
 import com.yveltius.memorize.ui.components.AppScaffold
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.viewmodels.AddVerseViewModel
-import com.yveltius.versememorization.entity.verses.Verse
+import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -43,9 +52,50 @@ fun AddVerseScreen(
     onBackPress: () -> Unit,
     addVerseViewModel: AddVerseViewModel = koinViewModel()
 ) {
-    AppScaffold {
-        val uiState by addVerseViewModel.uiState.collectAsState()
+    val uiState by addVerseViewModel.uiState.collectAsState()
+    var fabExpanded by remember { mutableStateOf(value = false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
+    LaunchedEffect(uiState.recentlySavedVerse) {
+        delay(500) // wait for the FAB menu to close, not sure how else to handle it.
+        uiState.recentlySavedVerse?.let { recentlySavedVerse ->
+            val snackbarString = context.getString(
+                R.string.snackbar_saved_verse,
+                recentlySavedVerse.getVerseNumberString()
+            )
+
+            snackbarHostState.showSnackbar(
+                message = snackbarString
+            )
+        }
+    }
+
+    LaunchedEffect(uiState.encounteredSaveError) {
+        delay(500) // wait for the FAB menu to close, not sure how else to handle it.
+        if (uiState.encounteredSaveError) {
+            val snackbarString = context.getString(R.string.input_error)
+
+            snackbarHostState.showSnackbar(message = snackbarString)
+
+            addVerseViewModel.resetEncounteredSaveError()
+        }
+    }
+
+    AppScaffold(
+        floatingActionButton = {
+            AddVerseFAB(
+                fabExpanded = fabExpanded,
+                onFabExpandedChanged = { fabExpanded = it },
+                onDelete = addVerseViewModel::onDeleteLastVerseNumberAndText,
+                onSave = addVerseViewModel::addVerse,
+                onAdd = addVerseViewModel::onAddVerseNumberAndText
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        }
+    ) {
         Surface(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -53,16 +103,6 @@ fun AddVerseScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 TopBar(
-                    onAddVerseRequest = {
-                        addVerseViewModel.addVerse(
-                            Verse(
-                                book = uiState.book,
-                                chapter = uiState.chapter.toInt(),
-                                verseText = uiState.verseNumberAndTextList.map { it.transform() },
-                                tags = listOf()
-                            )
-                        )
-                    },
                     onBackPress = onBackPress
                 )
 
@@ -74,7 +114,6 @@ fun AddVerseScreen(
                     verseNumberAndTextList = uiState.verseNumberAndTextList,
                     onVerseNumberChanged = addVerseViewModel::onVerseNumberChanged,
                     onVerseTextChanged = addVerseViewModel::onVerseTextChanged,
-                    onAddVerseNumberAndTextClick = addVerseViewModel::onAddVerseNumberAndText,
                     onDeleteVerseNumberAndText = addVerseViewModel::onDeleteVerseNumberAndText
                 )
             }
@@ -84,7 +123,6 @@ fun AddVerseScreen(
 
 @Composable
 fun TopBar(
-    onAddVerseRequest: () -> Unit,
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -95,16 +133,64 @@ fun TopBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = Icons.Filled.Close,
-            contentDescription = null,
-            modifier = Modifier.clickable { onBackPress() }
-        )
-
-        TextButton(
-            onClick = onAddVerseRequest
+        IconButton(
+            onClick = onBackPress
         ) {
-            Text(text = stringResource(R.string.add))
+            Icon(
+                painter = painterResource(R.drawable.outline_arrow_back_24),
+                contentDescription = null
+            )
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun AddVerseFAB(
+    fabExpanded: Boolean,
+    onFabExpandedChanged: (Boolean) -> Unit,
+    onDelete: () -> Unit,
+    onSave: () -> Unit,
+    onAdd: () -> Unit
+) {
+    FloatingActionButtonMenu(
+        modifier = Modifier,
+        horizontalAlignment = Alignment.End,
+        expanded = fabExpanded,
+        button = {
+            ToggleFloatingActionButton(
+                modifier = Modifier.animateFloatingActionButton(
+                    visible = true,
+                    alignment = Alignment.BottomEnd
+                ),
+                checked = fabExpanded,
+                onCheckedChange = onFabExpandedChanged
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.outline_edit_24),
+                    contentDescription = null
+                )
+            }
+        }
+    ) {
+        FabMenuItems.entries.forEach { fabMenuItems ->
+            FloatingActionButtonMenuItem(
+                onClick = {
+                    when (fabMenuItems) {
+                        FabMenuItems.Delete -> onDelete()
+                        FabMenuItems.Save -> onSave()
+                        FabMenuItems.Add -> onAdd()
+                    }
+                    onFabExpandedChanged(false)
+                },
+                icon = {
+                    Icon(
+                        painter = painterResource(fabMenuItems.getDrawableResId()),
+                        contentDescription = null
+                    )
+                },
+                text = { Text(text = fabMenuItems.name) }
+            )
         }
     }
 }
@@ -118,7 +204,6 @@ private fun VerseForm(
     verseNumberAndTextList: List<AddVerseViewModel.AddVerseNumberAndText>,
     onVerseNumberChanged: (index: Int, String) -> Unit,
     onVerseTextChanged: (index: Int, String) -> Unit,
-    onAddVerseNumberAndTextClick: () -> Unit,
     onDeleteVerseNumberAndText: (index: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -158,18 +243,6 @@ private fun VerseForm(
                     .padding(4.dp)
             )
         }
-
-        item {
-            Button(
-                onClick = onAddVerseNumberAndTextClick,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row {
-                    Icon(imageVector = Icons.Filled.Add, contentDescription = null)
-                    Text(text = stringResource(R.string.add_verse_text))
-                }
-            }
-        }
     }
 }
 
@@ -184,7 +257,7 @@ private fun BookAndChapter(
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Top
     ) {
         OutlinedTextField(
             value = book,
@@ -212,6 +285,11 @@ private fun BookAndChapter(
                 )
             },
             isError = chapter.toIntOrNull() == null && chapter.isNotEmpty(),
+            supportingText = {
+                if (chapter.toIntOrNull() == null && chapter.isNotEmpty()) {
+                    Text(text = stringResource(R.string.input_error))
+                }
+            },
             modifier = Modifier.weight(0.4f)
         )
     }
@@ -240,7 +318,7 @@ private fun EditableVerseNumberAndText(
                 maxLines = 1
             )
             Icon(
-                imageVector = Icons.Filled.Delete,
+                painter = painterResource(R.drawable.outline_delete_24),
                 contentDescription = null,
                 modifier = Modifier.clickable { onDeleteVerseNumberAndText(index) })
         }
@@ -255,6 +333,12 @@ private fun EditableVerseNumberAndText(
                 Text(
                     text = stringResource(R.string.verse_number)
                 )
+            },
+            isError = verseNumberAndText.verseNumber.toIntOrNull() == null && verseNumberAndText.verseNumber.isNotEmpty(),
+            supportingText = {
+                if (verseNumberAndText.verseNumber.toIntOrNull() == null && verseNumberAndText.verseNumber.isNotEmpty()) {
+                    Text(text = stringResource(R.string.input_error))
+                }
             },
             modifier = Modifier.fillMaxWidth()
         )
@@ -271,5 +355,20 @@ private fun EditableVerseNumberAndText(
             },
             modifier = Modifier.fillMaxWidth()
         )
+    }
+}
+
+private enum class FabMenuItems {
+    Delete,
+    Save,
+    Add,
+}
+
+@DrawableRes
+private fun FabMenuItems.getDrawableResId(): Int {
+    return when (this) {
+        FabMenuItems.Add -> R.drawable.outline_add_24
+        FabMenuItems.Delete -> R.drawable.outline_delete_24
+        FabMenuItems.Save -> R.drawable.outline_save_24
     }
 }

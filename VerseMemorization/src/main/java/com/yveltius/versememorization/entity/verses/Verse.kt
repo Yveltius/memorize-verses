@@ -14,8 +14,8 @@ data class Verse(
             "No Verse object should have an empty list of verseText(s)"
         }
         return when {
-            verseText.size == 1 -> verseText.first().verseNumber.toString()
-            verseText.size > 1 -> "${verseText.first().verseNumber}-${verseText.last().verseNumber}"
+            verseText.size == 1 -> "$book $chapter:${verseText.first().verseNumber}"
+            verseText.size > 1 -> "$book $chapter:${verseText.first().verseNumber}-${verseText.last().verseNumber}"
             else -> {
                 throw IllegalArgumentException("verseText list should not be empty.")
             }

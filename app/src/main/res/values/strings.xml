@@ -9,4 +9,8 @@
     <string name="verse_text">Verse Text</string>
     <string name="add_verse_text">Add Verse</string>
     <string name="no_text">No Text</string>
+
+    <string name="snackbar_saved_verse">Successfully saved %1$s.</string>
+
+    <string name="input_error">Please check your input.</string>
 </resources>

@@ -17,22 +17,33 @@ class AddVerseViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState
 
-    fun addVerse(verse: Verse) {
+    fun addVerse() {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(isSaving = true)
-            }
-
-            addVersesUseCase.addVerse(verse = verse)
-                .onSuccess {
-                    _uiState.update {
-                        it.copy(isSaving = false)
-                    }
-                }.onFailure {
-                    _uiState.update {
-                        it.copy(isSaving = false)
-                    }
+            buildVerse().getOrNull()?.let { verse ->
+                _uiState.update {
+                    it.copy(isSaving = true)
                 }
+
+                addVersesUseCase.addVerse(verse = verse)
+                    .onSuccess {
+                        _uiState.update {
+                            it.copy(
+                                isSaving = false,
+                                book = "",
+                                chapter = "",
+                                verseNumberAndTextList = listOf(AddVerseNumberAndText()),
+                                recentlySavedVerse = verse,
+                                encounteredSaveError = false
+                            )
+                        }
+                    }.onFailure {
+                        _uiState.update {
+                            it.copy(isSaving = false)
+                        }
+                    }
+            } ?: _uiState.update {
+                it.copy(isSaving = false, encounteredSaveError = true)
+            }
         }
     }
 
@@ -86,12 +97,50 @@ class AddVerseViewModel : ViewModel() {
         }
     }
 
+    fun onDeleteLastVerseNumberAndText() {
+        _uiState.update {
+            it.copy(
+                verseNumberAndTextList = it
+                    .verseNumberAndTextList
+                    .dropLast(1)
+            )
+        }
+    }
+
     data class UiState(
         val isSaving: Boolean = false,
         val book: String = "",
         val chapter: String = "",
-        val verseNumberAndTextList: List<AddVerseNumberAndText> = listOf()
+        val verseNumberAndTextList: List<AddVerseNumberAndText> = listOf(AddVerseNumberAndText()),
+        val recentlySavedVerse: Verse? = null,
+        val encounteredSaveError: Boolean = false
     )
+
+    private fun buildVerse(): Result<Verse> {
+        val chapterErrorFound = uiState.value.chapter.toIntOrNull() == null
+        val foundErrorInVerseNumbers = uiState
+            .value
+            .verseNumberAndTextList
+            .any { it.verseNumber.toIntOrNull() == null }
+
+        if (chapterErrorFound || foundErrorInVerseNumbers)
+            return Result.failure(Throwable("Failed to convert chapter or verse number to int. Check your inputs."))
+
+        return Result.success(
+            Verse(
+                book = uiState.value.book,
+                chapter = uiState.value.chapter.toInt(),
+                verseText = uiState.value.verseNumberAndTextList.map { it.transform() },
+                tags = listOf()
+            )
+        )
+    }
+
+    fun resetEncounteredSaveError() {
+        _uiState.update {
+            it.copy(encounteredSaveError = false)
+        }
+    }
 
     data class AddVerseNumberAndText(
         var verseNumber: String = "",
