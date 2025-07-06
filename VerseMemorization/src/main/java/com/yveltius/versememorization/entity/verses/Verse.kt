@@ -1,15 +1,18 @@
 package com.yveltius.versememorization.entity.verses
 
+import com.yveltius.versememorization.entity.util.UUIDSerializer
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @Serializable
 data class Verse(
     val book: String,
     val chapter: Int,
     val verseText: List<VerseNumberAndText>,
-    val tags: List<String>
+    val tags: List<String>,
+    @Serializable(with = UUIDSerializer::class) val uuid: UUID = UUID.randomUUID()
 ) {
-    fun getVerseNumberString(): String {
+    fun getVerseString(): String {
         assert(verseText.isNotEmpty()) {
             "No Verse object should have an empty list of verseText(s)"
         }

@@ -22,7 +22,7 @@ class VerseTest {
         )
 
         val expected = "7"
-        val actual = verse.getVerseNumberString()
+        val actual = verse.getVerseString()
 
         Assert.assertTrue("Expected: $expected, Actual: $actual", actual == expected)
     }
@@ -43,7 +43,7 @@ class VerseTest {
         )
 
         val expected = "7-8"
-        val actual = verse.getVerseNumberString()
+        val actual = verse.getVerseString()
 
         Assert.assertTrue("Expected: $expected, Actual: $actual", actual == expected)
     }
@@ -58,7 +58,7 @@ class VerseTest {
         )
 
         val expected = "1-100"
-        val actual = verse.getVerseNumberString()
+        val actual = verse.getVerseString()
 
         Assert.assertTrue("Expected: $expected, Actual: $actual", actual == expected)
     }

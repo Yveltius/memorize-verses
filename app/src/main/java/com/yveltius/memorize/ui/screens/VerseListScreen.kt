@@ -3,8 +3,10 @@ package com.yveltius.memorize.ui.screens
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,16 +15,23 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,6 +47,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun VerseListScreen(
     onAddVerse: () -> Unit,
+    onEditVerse: (Verse) -> Unit,
     versesListViewModel: VersesListViewModel = koinViewModel()
 ) {
     val uiState by versesListViewModel.uiState.collectAsState()
@@ -45,6 +55,8 @@ fun VerseListScreen(
     LaunchedEffect(Unit) { versesListViewModel.getVerses() }
     MainView(
         uiState = uiState,
+        onEdit = onEditVerse,
+        onDelete = { /* show the user a dialog */ },
         onFabClick = onAddVerse
     )
 }
@@ -52,7 +64,9 @@ fun VerseListScreen(
 @Composable
 fun MainView(
     uiState: VersesListViewModel.UiState,
-    onFabClick: () -> Unit
+    onFabClick: () -> Unit,
+    onEdit: (Verse) -> Unit,
+    onDelete: (Verse) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
     AppScaffold(
@@ -75,6 +89,8 @@ fun MainView(
             verses = uiState.verses,
             contentPadding = contentPadding,
             lazyListState = lazyListState,
+            onEdit = onEdit,
+            onDelete = onDelete,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -87,6 +103,8 @@ fun Content(
     verses: List<Verse>,
     contentPadding: PaddingValues,
     lazyListState: LazyListState,
+    onEdit: (Verse) -> Unit,
+    onDelete: (Verse) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -98,6 +116,8 @@ fun Content(
         items(verses) { verse ->
             VerseView(
                 verse = verse,
+                onEdit = onEdit,
+                onDelete = onDelete,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -107,8 +127,11 @@ fun Content(
 @Composable
 fun VerseView(
     verse: Verse,
+    onEdit: (Verse) -> Unit,
+    onDelete: (Verse) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var expanded by remember { mutableStateOf(value = false) }
     Card(
         modifier = modifier
     ) {
@@ -118,7 +141,58 @@ fun VerseView(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(text = "${verse.book} ${verse.chapter}:${verse.getVerseNumberString()}")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = verse.getVerseString())
+                IconButton(
+                    onClick = {
+                        expanded = !expanded
+                    }
+                ) {
+                    Box {
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(R.string.edit)) },
+                                onClick = {
+                                    onEdit(verse)
+                                    expanded = false
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.outline_edit_24),
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(R.string.delete)) },
+                                onClick = {
+                                    onDelete(verse)
+                                    expanded = false
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.outline_delete_24),
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                        }
+                        Icon(
+                            painter = painterResource(R.drawable.outline_more_vert_24),
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
             Text(
                 text = buildAnnotatedVerse(verseNumberAndTexts = verse.verseText),
                 modifier = Modifier.padding(horizontal = 8.dp)
@@ -158,6 +232,8 @@ private fun VerseViewPreviewLight() {
             ),
             tags = listOf("Discipleship Verse", "Obedience to Christ", "Romans")
         ),
+        onEdit = {},
+        onDelete = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
@@ -186,6 +262,8 @@ private fun VerseViewPreviewDark() {
             ),
             tags = listOf("Discipleship Verse", "Obedience to Christ", "Romans")
         ),
+        onEdit = {},
+        onDelete = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
@@ -214,6 +292,8 @@ private fun VerseViewPreviewDarkNoTags() {
             ),
             tags = listOf()
         ),
+        onEdit = {},
+        onDelete = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)

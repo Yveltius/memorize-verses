@@ -46,10 +46,12 @@ import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.viewmodels.AddVerseViewModel
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
+import java.util.UUID
 
 @Composable
 fun AddVerseScreen(
     onBackPress: () -> Unit,
+    verseUUID: UUID? = null,
     addVerseViewModel: AddVerseViewModel = koinViewModel()
 ) {
     val uiState by addVerseViewModel.uiState.collectAsState()
@@ -62,7 +64,7 @@ fun AddVerseScreen(
         uiState.recentlySavedVerse?.let { recentlySavedVerse ->
             val snackbarString = context.getString(
                 R.string.snackbar_saved_verse,
-                recentlySavedVerse.getVerseNumberString()
+                recentlySavedVerse.getVerseString()
             )
 
             snackbarHostState.showSnackbar(

@@ -2,6 +2,8 @@
     <string name="app_name">Memorize Verses</string>
 
     <string name="add">Add</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
 
     <string name="book">Book</string>
     <string name="chapter">Chapter</string>
