@@ -9,6 +9,7 @@ import com.yveltius.versememorization.data.verses.VerseRepositoryImpl
 import com.yveltius.versememorization.domain.verses.AddVersesUseCase
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.domain.verses.RemoveVersesUseCase
+import com.yveltius.versememorization.domain.verses.UpdateVerseUseCase
 import org.koin.dsl.module
 
 object KoinModules {
@@ -27,6 +28,8 @@ object KoinModules {
         factory { AddVersesUseCase(verseRepository = get()) }
 
         factory { RemoveVersesUseCase(verseRepository = get()) }
+
+        factory { UpdateVerseUseCase(verseRepository = get()) }
     }
 
     private val miscModule = module {

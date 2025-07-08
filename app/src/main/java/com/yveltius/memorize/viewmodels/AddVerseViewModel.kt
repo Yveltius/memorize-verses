@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yveltius.versememorization.domain.verses.AddVersesUseCase
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
+import com.yveltius.versememorization.domain.verses.UpdateVerseUseCase
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ import java.util.UUID
 class AddVerseViewModel : ViewModel() {
     private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
     private val addVersesUseCase: AddVersesUseCase by inject(AddVersesUseCase::class.java)
+    private val updateVerseUseCase: UpdateVerseUseCase by inject(UpdateVerseUseCase::class.java)
 
     private val _uiState = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState
@@ -44,7 +46,28 @@ class AddVerseViewModel : ViewModel() {
 
     fun updateVerse() {
         viewModelScope.launch {
-            println("ZAC is trying to update a verse!")
+            buildVerse().getOrNull()?.let { verse ->
+                _uiState.update {
+                    it.copy(isSaving = true)
+                }
+
+                updateVerseUseCase.updateVerse(updatedVerse = verse)
+                    .onSuccess {
+                        _uiState.update {
+                            it.copy(
+                                isSaving = false,
+                                recentlySavedVerse = verse,
+                                encounteredSaveError = false
+                            )
+                        }
+                    }.onFailure {
+                        _uiState.update {
+                            it.copy(isSaving = false, encounteredSaveError = true)
+                        }
+                    }
+            } ?: _uiState.update {
+                it.copy(isSaving = false, encounteredSaveError = true)
+            }
         }
     }
 
