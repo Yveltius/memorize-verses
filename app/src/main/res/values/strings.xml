@@ -13,6 +13,7 @@
     <string name="no_text">No Text</string>
 
     <string name="snackbar_saved_verse">Successfully saved %1$s.</string>
+    <string name="snackbar_failed_to_load_verse_for_edit">Failed to load the verse for editing.</string>
 
     <string name="input_error">Please check your input.</string>
     <string name="input_cant_be_empty">Input cannot be empty.</string>

@@ -1,6 +1,7 @@
 package com.yveltius.versememorization.data.verses
 
 import com.yveltius.versememorization.entity.verses.Verse
+import java.util.UUID
 
 internal interface VerseRepository {
     /**
@@ -19,7 +20,8 @@ internal interface VerseRepository {
         chapter: Int? = null,
         verseNumber: Int? = null,
         partialText: String? = null,
-        tags: List<String> = listOf()
+        tags: List<String> = listOf(),
+        uuid: UUID? = null
     ): Result<Verse>
 
     /**
@@ -42,4 +44,9 @@ internal interface VerseRepository {
     suspend fun addVerse(verse: Verse): Result<Unit>
 
     suspend fun removeVerse(verse: Verse): Result<Unit>
+
+    /**
+     * @param updatedVerse The verse in its edited state to be saved
+     */
+    suspend fun updateVerse(updatedVerse: Verse): Result<Unit>
 }

@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
                 composable<VerseList> {
                     VerseListScreen(
                         onAddVerse = { navController.navigate(route = AddVerse) },
-                        onEditVerse = { verse -> navController.navigate(route = EditVerse(verseUUIDString = verse.uuid.toString())) }
+                        onEditVerse = { verse -> navController.navigate(route = EditVerse(verseUUIDString = UUID.randomUUID().toString()/*verse.uuid.toString()*/)) }
                     )
                 }
                 composable<AddVerse> {

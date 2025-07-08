@@ -3,6 +3,7 @@ package com.yveltius.memorize.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yveltius.versememorization.domain.verses.AddVersesUseCase
+import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,39 +11,77 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
+import java.util.UUID
 
 class AddVerseViewModel : ViewModel() {
+    private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
     private val addVersesUseCase: AddVersesUseCase by inject(AddVersesUseCase::class.java)
 
     private val _uiState = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState
 
+    fun getVerseBeingEdited(uuid: UUID) {
+        viewModelScope.launch {
+            getVersesUseCase.getVerse(uuid = uuid)
+                .onSuccess { verse ->
+                    _uiState.update {
+                        it.copy(
+                            book = verse.book,
+                            chapter = verse.chapter.toString(),
+                            verseNumberAndTextList = verse.verseText.toVerseNumberAndTextList(),
+                            verseBeingEdited = verse
+                        )
+                    }
+                }.onFailure {
+                    _uiState.update {
+                        it.copy(
+                            failedToLoadVerseForEdit = true
+                        )
+                    }
+                }
+        }
+    }
+
+    fun updateVerse() {
+        viewModelScope.launch {
+            println("ZAC is trying to update a verse!")
+        }
+    }
+
     fun addVerse() {
         viewModelScope.launch {
-            buildVerse().getOrNull()?.let { verse ->
-                _uiState.update {
-                    it.copy(isSaving = true)
+            when (uiState.value.verseBeingEdited) {
+                null -> {
+                    buildVerse().getOrNull()?.let { verse ->
+                        _uiState.update {
+                            it.copy(isSaving = true)
+                        }
+
+                        addVersesUseCase.addVerse(verse = verse)
+                            .onSuccess {
+                                _uiState.update {
+                                    it.copy(
+                                        isSaving = false,
+                                        book = "",
+                                        chapter = "",
+                                        verseNumberAndTextList = listOf(AddVerseNumberAndText()),
+                                        recentlySavedVerse = verse,
+                                        encounteredSaveError = false
+                                    )
+                                }
+                            }.onFailure {
+                                _uiState.update {
+                                    it.copy(isSaving = false)
+                                }
+                            }
+                    } ?: _uiState.update {
+                        it.copy(isSaving = false, encounteredSaveError = true)
+                    }
                 }
 
-                addVersesUseCase.addVerse(verse = verse)
-                    .onSuccess {
-                        _uiState.update {
-                            it.copy(
-                                isSaving = false,
-                                book = "",
-                                chapter = "",
-                                verseNumberAndTextList = listOf(AddVerseNumberAndText()),
-                                recentlySavedVerse = verse,
-                                encounteredSaveError = false
-                            )
-                        }
-                    }.onFailure {
-                        _uiState.update {
-                            it.copy(isSaving = false)
-                        }
-                    }
-            } ?: _uiState.update {
-                it.copy(isSaving = false, encounteredSaveError = true)
+                else -> {
+                    updateVerse()
+                }
             }
         }
     }
@@ -109,11 +148,13 @@ class AddVerseViewModel : ViewModel() {
 
     data class UiState(
         val isSaving: Boolean = false,
+        val verseBeingEdited: Verse? = null,
         val book: String = "",
         val chapter: String = "",
         val verseNumberAndTextList: List<AddVerseNumberAndText> = listOf(AddVerseNumberAndText()),
         val recentlySavedVerse: Verse? = null,
-        val encounteredSaveError: Boolean = false
+        val encounteredSaveError: Boolean = false,
+        val failedToLoadVerseForEdit: Boolean = false
     )
 
     private fun buildVerse(): Result<Verse> {
@@ -136,7 +177,8 @@ class AddVerseViewModel : ViewModel() {
                 book = uiState.value.book,
                 chapter = uiState.value.chapter.toInt(),
                 verseText = uiState.value.verseNumberAndTextList.map { it.transform() },
-                tags = listOf()
+                tags = listOf(),
+                uuid = uiState.value.verseBeingEdited?.uuid ?: UUID.randomUUID()
             )
         )
     }
@@ -147,12 +189,27 @@ class AddVerseViewModel : ViewModel() {
         }
     }
 
+    fun resetFailedToLoadVerseForEdit() {
+        _uiState.update {
+            it.copy(failedToLoadVerseForEdit = false)
+        }
+    }
+
     data class AddVerseNumberAndText(
         var verseNumber: String = "",
         var verseText: String = ""
     ) {
         fun transform(): VerseNumberAndText {
             return VerseNumberAndText(verseNumber.toIntOrNull() ?: 0, verseText)
+        }
+    }
+
+    private fun List<VerseNumberAndText>.toVerseNumberAndTextList(): List<AddVerseNumberAndText> {
+        return this.map { (verseNumber, text) ->
+            AddVerseNumberAndText(
+                verseNumber = verseNumber.toString(),
+                verseText = text
+            )
         }
     }
 }
