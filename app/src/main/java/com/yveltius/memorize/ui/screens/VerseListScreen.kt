@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -21,6 +23,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -36,7 +39,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.yveltius.memorize.R
+import com.yveltius.memorize.ui.components.AppButton
 import com.yveltius.memorize.ui.components.AppScaffold
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.viewmodels.VersesListViewModel
@@ -56,8 +61,8 @@ fun VerseListScreen(
     MainView(
         uiState = uiState,
         onEdit = onEditVerse,
-        onDelete = { /* show the user a dialog */ },
-        onFabClick = onAddVerse
+        onFabClick = onAddVerse,
+        onDeleteConfirmed = versesListViewModel::removeVerse
     )
 }
 
@@ -66,8 +71,11 @@ fun MainView(
     uiState: VersesListViewModel.UiState,
     onFabClick: () -> Unit,
     onEdit: (Verse) -> Unit,
-    onDelete: (Verse) -> Unit,
+    onDeleteConfirmed: (Verse) -> Unit
 ) {
+    var showDeletePrompt by remember { mutableStateOf(value = false) }
+    var verseToBeDeleted: Verse? by remember { mutableStateOf(value = null) }
+
     val lazyListState = rememberLazyListState()
     AppScaffold(
         modifier = Modifier.fillMaxSize(),
@@ -90,11 +98,48 @@ fun MainView(
             contentPadding = contentPadding,
             lazyListState = lazyListState,
             onEdit = onEdit,
-            onDelete = onDelete,
+            onShowDeletePrompt = {
+                verseToBeDeleted = it
+                showDeletePrompt = true
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         )
+
+        if (showDeletePrompt) {
+            AlertDialog(
+                onDismissRequest = {
+                    verseToBeDeleted = null
+                    showDeletePrompt = false
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        verseToBeDeleted = null
+                        showDeletePrompt = false
+                    }) {
+                        Text(text = stringResource(R.string.cancel))
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        onDeleteConfirmed(verseToBeDeleted!!)
+                        showDeletePrompt = false
+                    }) {
+                        Text(text = stringResource(R.string.confirm))
+                    }
+                },
+                text = {
+                    Text(
+                        text = stringResource(
+                            id = R.string.dialog_delete_verse_description,
+                            verseToBeDeleted?.getVerseString()
+                                ?: stringResource(R.string.dialog_delete_verse_description)
+                        )
+                    )
+                }
+            )
+        }
     }
 }
 
@@ -104,7 +149,7 @@ fun Content(
     contentPadding: PaddingValues,
     lazyListState: LazyListState,
     onEdit: (Verse) -> Unit,
-    onDelete: (Verse) -> Unit,
+    onShowDeletePrompt: (Verse) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -117,7 +162,7 @@ fun Content(
             VerseView(
                 verse = verse,
                 onEdit = onEdit,
-                onDelete = onDelete,
+                onShowDeletePrompt = onShowDeletePrompt,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -128,7 +173,7 @@ fun Content(
 fun VerseView(
     verse: Verse,
     onEdit: (Verse) -> Unit,
-    onDelete: (Verse) -> Unit,
+    onShowDeletePrompt: (Verse) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(value = false) }
@@ -175,7 +220,7 @@ fun VerseView(
                             DropdownMenuItem(
                                 text = { Text(text = stringResource(R.string.delete)) },
                                 onClick = {
-                                    onDelete(verse)
+                                    onShowDeletePrompt(verse)
                                     expanded = false
                                 },
                                 leadingIcon = {
@@ -233,7 +278,7 @@ private fun VerseViewPreviewLight() {
             tags = listOf("Discipleship Verse", "Obedience to Christ", "Romans")
         ),
         onEdit = {},
-        onDelete = {},
+        onShowDeletePrompt = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
@@ -263,7 +308,7 @@ private fun VerseViewPreviewDark() {
             tags = listOf("Discipleship Verse", "Obedience to Christ", "Romans")
         ),
         onEdit = {},
-        onDelete = {},
+        onShowDeletePrompt = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
@@ -293,7 +338,7 @@ private fun VerseViewPreviewDarkNoTags() {
             tags = listOf()
         ),
         onEdit = {},
-        onDelete = {},
+        onShowDeletePrompt = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
