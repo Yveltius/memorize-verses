@@ -46,10 +46,12 @@ import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.viewmodels.AddVerseViewModel
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
+import java.util.UUID
 
 @Composable
 fun AddVerseScreen(
     onBackPress: () -> Unit,
+    verseUUID: UUID? = null,
     addVerseViewModel: AddVerseViewModel = koinViewModel()
 ) {
     val uiState by addVerseViewModel.uiState.collectAsState()
@@ -57,12 +59,18 @@ fun AddVerseScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
+    LaunchedEffect(Unit) {
+        verseUUID?.let {
+            addVerseViewModel.getVerseBeingEdited(uuid = verseUUID)
+        }
+    }
+
     LaunchedEffect(uiState.recentlySavedVerse) {
         delay(500) // wait for the FAB menu to close, not sure how else to handle it.
         uiState.recentlySavedVerse?.let { recentlySavedVerse ->
             val snackbarString = context.getString(
                 R.string.snackbar_saved_verse,
-                recentlySavedVerse.getVerseNumberString()
+                recentlySavedVerse.getVerseString()
             )
 
             snackbarHostState.showSnackbar(
@@ -79,6 +87,16 @@ fun AddVerseScreen(
             snackbarHostState.showSnackbar(message = snackbarString)
 
             addVerseViewModel.resetEncounteredSaveError()
+        }
+    }
+
+    LaunchedEffect(uiState.failedToLoadVerseForEdit) {
+        if (uiState.failedToLoadVerseForEdit) {
+            val snackbarString = context.getString(R.string.snackbar_failed_to_load_verse_for_edit)
+
+            snackbarHostState.showSnackbar(message = snackbarString)
+
+            addVerseViewModel.resetFailedToLoadVerseForEdit()
         }
     }
 

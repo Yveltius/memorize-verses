@@ -19,6 +19,7 @@ import org.koin.core.context.stopKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
+import java.util.UUID
 
 @RunWith(JUnit4::class)
 class VerseRepositoryImplTest {
@@ -173,6 +174,33 @@ class VerseRepositoryImplTest {
     }
 
     @Test
+    fun `get verse given uuid`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+        val newVerseUUID = UUID.randomUUID()
+
+        val verse = Verse(
+            book = "Amos",
+            chapter = 5,
+            verseText = listOf(
+                VerseNumberAndText(
+                    verseNumber = 9,
+                    text = "It is He who flashes forth with devastation upon the strong So that devastation comes upon the fortification."
+                )
+            ),
+            tags = listOf(),
+            uuid = newVerseUUID
+        )
+
+        runBlocking { verseRepository.addVerse(verse).getOrThrow() }
+
+        val actual = runBlocking { verseRepository.getVerse(uuid = newVerseUUID).getOrThrow() }
+        Assert.assertTrue(
+            "Expected verse count: $verse, actual: $actual",
+            actual == verse
+        )
+    }
+
+    @Test
     fun `correct book but wrong chapter should return 0 verses`() {
         val verseRepository: VerseRepository by inject(VerseRepository::class.java)
 
@@ -257,7 +285,7 @@ class VerseRepositoryImplTest {
 
     //region removeVerse
     @Test
-    fun `remove verse that perfectly matches, not just those that are very close`() {
+    fun `remove verse that matches UUID`() {
         /*
         What I mean by the function name is the scenario where you have two
         [Verse] objects, one containing Romans 12:1-2 and one containing Romans 12:2.
@@ -266,20 +294,11 @@ class VerseRepositoryImplTest {
         val verseRepository: VerseRepository by inject(VerseRepository::class.java)
 
         val versesBeforeRemoval = runBlocking { verseRepository.getVerses().getOrThrow() }
+        val verseToRemove = versesBeforeRemoval.random()
 
         runBlocking {
             verseRepository.removeVerse(
-                verse = Verse(
-                    book = "Romans",
-                    chapter = 12,
-                    verseText = listOf(
-                        VerseNumberAndText(
-                            verseNumber = 2,
-                            text = "And do not be conformed to this world, but be transformed by the renewing of your mind, so that you may approve what the will of God is, that which is good and pleasing and perfect."
-                        )
-                    ),
-                    tags = listOf("Discipleship Verse", "Separate from the World")
-                )
+                verse = verseToRemove
             ).getOrThrow()
         }
 
@@ -291,6 +310,43 @@ class VerseRepositoryImplTest {
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
+    }
+
+    @Test
+    fun `throws if there is not a matching verse to remove`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        val versesBeforeRemoval = runBlocking { verseRepository.getVerses().getOrThrow() }
+        val verseToRemove = versesBeforeRemoval.random()
+
+        Assert.assertThrows(Throwable::class.java) {
+            runBlocking {
+                verseRepository.removeVerse(
+                    verse = verseToRemove.copy(uuid = UUID.randomUUID())
+                ).getOrThrow()
+            }
+        }
+    }
+
+    @Test
+    fun `throws if more than one verse is removed`() {
+        //should only happen in a scenario where somehow the exact same verse was saved twice.
+        //this state should not occur and other tests should address this case in addVerse
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        val versesBeforeRemoval = runBlocking { verseRepository.getVerses().getOrThrow() }
+        val verseBeingTestedAgainst = runBlocking { versesBeforeRemoval.random() }
+
+        //force add second matching verse
+        runBlocking {
+            verseRepository.addVerse(verse = verseBeingTestedAgainst).getOrThrow()
+        }
+
+        Assert.assertThrows(Throwable::class.java) {
+            runBlocking {
+                verseRepository.removeVerse(verse = verseBeingTestedAgainst).getOrThrow()
+            }
+        }
     }
     //endregion
 
@@ -350,11 +406,77 @@ class VerseRepositoryImplTest {
         }
 
         val expected = runBlocking {
-            verseRepository.getVerses(book = "John", chapter = 15, verseNumber = 7).getOrThrow().first()
+            verseRepository.getVerses(book = "John", chapter = 15, verseNumber = 7).getOrThrow()
+                .first()
         }
         Assert.assertTrue(
             "Expected verse count: $expected, actual: $verse",
             verse == expected
+        )
+    }
+    //endregion
+
+    //region updateVerse
+    @Test
+    fun `updated verse has correct values`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+        val verseToEdit = runBlocking { verseRepository.getVerses().getOrThrow().first() }
+
+        val editedVerse = verseToEdit.copy(
+            book = "Changed",
+            chapter = 2,
+            verseText = verseToEdit.verseText + VerseNumberAndText(
+                verseNumber = 300,
+                text = "added text for verse"
+            )
+        )
+
+        runBlocking {
+            verseRepository.updateVerse(updatedVerse = editedVerse).getOrThrow()
+        }
+
+        val retrievedEditedVerseFromRepo =
+            runBlocking { verseRepository.getVerse(uuid = editedVerse.uuid) }
+
+        Assert.assertTrue(
+            "Expected: $editedVerse, Actual: $retrievedEditedVerseFromRepo",
+            editedVerse == retrievedEditedVerseFromRepo.getOrThrow()
+        )
+    }
+
+    @Test
+    fun `save verse if matching verse is not found`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+        //get the verse
+        val verseToEdit = runBlocking { verseRepository.getVerses().getOrThrow().first() }
+
+        //edit the verse
+        val editedVerse = verseToEdit.copy(
+            book = "Changed",
+            chapter = 2,
+            verseText = verseToEdit.verseText + VerseNumberAndText(
+                verseNumber = 300,
+                text = "added text for verse"
+            ),
+            uuid = UUID.randomUUID()
+        )
+
+        //delete the original from the store
+        runBlocking {
+            verseRepository.removeVerse(verse = verseToEdit).getOrThrow()
+        }
+
+        //attempt to update the verse
+        runBlocking {
+            verseRepository.updateVerse(updatedVerse = editedVerse).getOrThrow()
+        }
+
+        val retrievedEditedVerseFromRepo =
+            runBlocking { verseRepository.getVerse(uuid = editedVerse.uuid) }
+
+        Assert.assertTrue(
+            "Expected: $editedVerse, Actual: $retrievedEditedVerseFromRepo",
+            editedVerse == retrievedEditedVerseFromRepo.getOrThrow()
         )
     }
     //endregion

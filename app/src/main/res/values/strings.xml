@@ -2,6 +2,10 @@
     <string name="app_name">Memorize Verses</string>
 
     <string name="add">Add</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
 
     <string name="book">Book</string>
     <string name="chapter">Chapter</string>
@@ -10,7 +14,11 @@
     <string name="add_verse_text">Add Verse</string>
     <string name="no_text">No Text</string>
 
+    <string name="dialog_delete_verse_description">Are you sure you want to delete %1$s?</string>
+    <string name="dialog_delete_verse_description_null_verse_fallback">this verse</string>
+
     <string name="snackbar_saved_verse">Successfully saved %1$s.</string>
+    <string name="snackbar_failed_to_load_verse_for_edit">Failed to load the verse for editing.</string>
 
     <string name="input_error">Please check your input.</string>
     <string name="input_cant_be_empty">Input cannot be empty.</string>

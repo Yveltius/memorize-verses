@@ -9,6 +9,7 @@ import com.yveltius.versememorization.entity.util.toJsonString
 import com.yveltius.versememorization.entity.util.toPrettyJsonString
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
+import java.util.UUID
 
 private const val VERSES_FILE_NAME = "verses"
 
@@ -23,11 +24,29 @@ internal class VerseRepositoryImpl(
         chapter: Int?,
         verseNumber: Int?,
         partialText: String?,
-        tags: List<String>
+        tags: List<String>,
+        uuid: UUID?
     ): Result<Verse> {
-//        val verses = getVersesFromFile().getOrThrow()
+        return doWork(
+            failureMessage = "Failed to get a verse matching the following parameters:\n" +
+                    "Book: $book\n" +
+                    "Chapter: $chapter\n" +
+                    "Verse Number: $verseNumber\n" +
+                    "Partial Text: $partialText\n" +
+                    "Tags: $tags\n" +
+                    "UUID: $uuid"
+        ) {
+            val verses = getVerses(book, chapter, verseNumber, partialText, tags).getOrThrow()
 
-        TODO("Not yet implemented")
+            val verse = verses.filterByUUID(uuid = uuid!!).first()
+
+            log.debug(
+                tag = logTag,
+                message = "Successfully found a verse matching the given parameters: ${verse.getVerseString()}"
+            )
+
+            verse
+        }
     }
 
     override suspend fun getVerses(
@@ -48,11 +67,13 @@ internal class VerseRepositoryImpl(
             val verses = getVersesFromFile().getOrThrow()
 
             val filteredVerses = verses
+                .asSequence()
                 .filterByBook(book)
                 .filterByChapter(chapter)
                 .filterByVerseNumber(verseNumber)
                 .filterByPartialText(partialText)
                 .filterByTags(tags)
+                .toList()
 
             log.debug(
                 tag = logTag,
@@ -88,7 +109,34 @@ internal class VerseRepositoryImpl(
 
             val versesWithRemoval = verses.filterWithoutVerse(verse)
 
-            setVersesToFile(versesWithRemoval)
+            if (verses.size == versesWithRemoval.size) throw Throwable("No matching verse was found to remove.")
+
+            if (verses.size > versesWithRemoval.size + 1) throw Throwable("More than one matching verse was found and deleted.")
+
+            setVersesToFile(verses = versesWithRemoval)
+        }
+    }
+
+    override suspend fun updateVerse(updatedVerse: Verse): Result<Unit> {
+        return doWork(
+            failureMessage = "Failed to update verse($updatedVerse)."
+        ) {
+            val verses = getVersesFromFile().getOrThrow()
+
+            if (verses.filterByUUID(uuid = updatedVerse.uuid).firstOrNull() != null) {
+                val versesWithChange = verses.map { verse ->
+                    if (verse.uuid == updatedVerse.uuid) {
+                        updatedVerse
+                    } else {
+                        verse
+                    }
+                }
+
+                setVersesToFile(verses = versesWithChange)
+            } else {
+                // verse was not found, just save it
+                addVerse(updatedVerse).getOrThrow()
+            }
         }
     }
 
@@ -129,7 +177,7 @@ internal class VerseRepositoryImpl(
         }
     }
 
-    private fun List<Verse>.filterByBook(book: String?): List<Verse> {
+    private fun Sequence<Verse>.filterByBook(book: String?): Sequence<Verse> {
         return this.filter { verse: Verse ->
             book?.let {
                 verse.book.lowercase().contains(book.lowercase())
@@ -137,7 +185,7 @@ internal class VerseRepositoryImpl(
         }
     }
 
-    private fun List<Verse>.filterByChapter(chapter: Int?): List<Verse> {
+    private fun Sequence<Verse>.filterByChapter(chapter: Int?): Sequence<Verse> {
         return this.filter { verse: Verse ->
             chapter?.let {
                 verse.chapter == chapter
@@ -145,7 +193,7 @@ internal class VerseRepositoryImpl(
         }
     }
 
-    private fun List<Verse>.filterByVerseNumber(verseNumber: Int?): List<Verse> {
+    private fun Sequence<Verse>.filterByVerseNumber(verseNumber: Int?): Sequence<Verse> {
         return this.filter { verse: Verse ->
             verseNumber?.let {
                 verse.verseText.any { verseNumberAndText -> verseNumberAndText.verseNumber == verseNumber }
@@ -153,7 +201,7 @@ internal class VerseRepositoryImpl(
         }
     }
 
-    private fun List<Verse>.filterByTags(tags: List<String>?): List<Verse> {
+    private fun Sequence<Verse>.filterByTags(tags: List<String>?): Sequence<Verse> {
         return this.filter { verse: Verse ->
             tags?.let {
                 verse.tags.containsAllIgnoreCase(tags)
@@ -161,7 +209,7 @@ internal class VerseRepositoryImpl(
         }
     }
 
-    private fun List<Verse>.filterByPartialText(partialText: String?): List<Verse> {
+    private fun Sequence<Verse>.filterByPartialText(partialText: String?): Sequence<Verse> {
         return this.filter { verse: Verse ->
             partialText?.let {
                 verse.verseText.any { verseNumberAndText ->
@@ -170,7 +218,15 @@ internal class VerseRepositoryImpl(
                         ignoreCase = true
                     )
                 }
-            } ?: true // if tags are null, let all through
+            } ?: true // if partialText is null, let all through
+        }
+    }
+
+    private fun List<Verse>.filterByUUID(uuid: UUID?): List<Verse> {
+        return this.filter { verse ->
+            uuid?.let {
+                verse.uuid == uuid
+            } ?: true // let all through if uuid is null
         }
     }
 
@@ -184,7 +240,8 @@ internal class VerseRepositoryImpl(
         return this.book == other.book &&
                 this.chapter == other.chapter &&
                 this.tags.containsAllIgnoreCase(other.tags) &&
-                this.verseText.matches(other.verseText)
+                this.verseText.matches(other.verseText) &&
+                this.uuid == other.uuid
     }
 
     /**

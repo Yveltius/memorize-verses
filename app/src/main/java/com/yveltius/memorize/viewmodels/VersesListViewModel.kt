@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yveltius.versememorization.domain.verses.AddVersesUseCase
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
+import com.yveltius.versememorization.domain.verses.RemoveVersesUseCase
 import com.yveltius.versememorization.entity.verses.Verse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +15,7 @@ import org.koin.java.KoinJavaComponent.inject
 class VersesListViewModel : ViewModel() {
     private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
     private val addVersesUseCase: AddVersesUseCase by inject(AddVersesUseCase::class.java)
+    private val removeVersesUseCase: RemoveVersesUseCase by inject(RemoveVersesUseCase::class.java)
 
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState
@@ -39,6 +41,18 @@ class VersesListViewModel : ViewModel() {
                     getVerses()
                 }.onFailure {
                     // todo display save error
+                }
+        }
+    }
+
+    fun removeVerse(verse: Verse) {
+        viewModelScope.launch {
+            removeVersesUseCase.removeVerse(verse)
+                .onSuccess {
+                    getVerses()
+                }
+                .onFailure {
+                    // todo display removal error
                 }
         }
     }
