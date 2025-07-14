@@ -1,29 +1,33 @@
 package com.yveltius.memorize.ui.screens
 
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingActionButtonMenu
-import androidx.compose.material3.FloatingActionButtonMenuItem
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.FloatingToolbarHorizontalFabPosition
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleFloatingActionButton
-import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,7 +59,6 @@ fun AddVerseScreen(
     addVerseViewModel: AddVerseViewModel = koinViewModel()
 ) {
     val uiState by addVerseViewModel.uiState.collectAsState()
-    var fabExpanded by remember { mutableStateOf(value = false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
@@ -102,40 +105,83 @@ fun AddVerseScreen(
 
     AppScaffold(
         floatingActionButton = {
-            AddVerseFAB(
-                fabExpanded = fabExpanded,
-                onFabExpandedChanged = { fabExpanded = it },
+            AddVerseBottomBar(
+                onAdd = addVerseViewModel::onAddVerseNumberAndText,
                 onDelete = addVerseViewModel::onDeleteLastVerseNumberAndText,
                 onSave = addVerseViewModel::addVerse,
-                onAdd = addVerseViewModel::onAddVerseNumberAndText
+                onShowTag = { }
             )
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         }
-    ) {
+    ) { paddingValues ->
         Surface(
             modifier = Modifier.fillMaxSize()
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                TopBar(
-                    onBackPress = onBackPress
-                )
-
-                VerseForm(
-                    book = uiState.book,
-                    onBookChanged = addVerseViewModel::onBookChanged,
-                    chapter = uiState.chapter,
-                    onChapterChanged = addVerseViewModel::onChapterChanged,
-                    verseNumberAndTextList = uiState.verseNumberAndTextList,
-                    onVerseNumberChanged = addVerseViewModel::onVerseNumberChanged,
-                    onVerseTextChanged = addVerseViewModel::onVerseTextChanged,
-                    onDeleteVerseNumberAndText = addVerseViewModel::onDeleteVerseNumberAndText
-                )
-            }
+            Content(
+                book = uiState.book,
+                chapter = uiState.chapter,
+                verseNumberAndTextList = uiState.verseNumberAndTextList,
+                onBookChanged = addVerseViewModel::onBookChanged,
+                onChapterChanged = addVerseViewModel::onChapterChanged,
+                onVerseNumberChanged = addVerseViewModel::onVerseNumberChanged,
+                onVerseTextChanged = addVerseViewModel::onVerseTextChanged,
+                onDeleteVerseNumberAndText = addVerseViewModel::onDeleteVerseNumberAndText,
+                onBackPress = onBackPress,
+                currentTagBeingEdited = uiState.currentTagBeingEdited,
+                onTagChanged = addVerseViewModel::onTagChanged,
+                onAddTag = addVerseViewModel::onAddTag,
+                onRemoveTag = addVerseViewModel::onRemoveTag,
+                tags = uiState.tags,
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize()
+            )
         }
+    }
+}
+
+@Composable
+private fun Content(
+    book: String,
+    chapter: String,
+    verseNumberAndTextList: List<AddVerseViewModel.AddVerseNumberAndText>,
+    onBookChanged: (String) -> Unit,
+    onChapterChanged: (String) -> Unit,
+    onVerseNumberChanged: (Int, String) -> Unit,
+    onVerseTextChanged: (Int, String) -> Unit,
+    onDeleteVerseNumberAndText: (Int) -> Unit,
+    onBackPress: () -> Unit,
+    currentTagBeingEdited: String,
+    onTagChanged: (String) -> Unit,
+    onAddTag: (String) -> Unit,
+    onRemoveTag: (String) -> Unit,
+    tags: List<String>,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        TopBar(
+            onBackPress = onBackPress
+        )
+
+        VerseForm(
+            book = book,
+            onBookChanged = onBookChanged,
+            chapter = chapter,
+            onChapterChanged = onChapterChanged,
+            verseNumberAndTextList = verseNumberAndTextList,
+            onVerseNumberChanged = onVerseNumberChanged,
+            onVerseTextChanged = onVerseTextChanged,
+            onDeleteVerseNumberAndText = onDeleteVerseNumberAndText,
+            currentTagBeingEdited = currentTagBeingEdited,
+            onTagChanged = onTagChanged,
+            onAddTag = onAddTag,
+            onRemoveTag = onRemoveTag,
+            tags = tags,
+        )
     }
 }
 
@@ -162,53 +208,40 @@ fun TopBar(
     }
 }
 
-@Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun AddVerseFAB(
-    fabExpanded: Boolean,
-    onFabExpandedChanged: (Boolean) -> Unit,
+@Composable
+fun AddVerseBottomBar(
+    onAdd: () -> Unit,
     onDelete: () -> Unit,
     onSave: () -> Unit,
-    onAdd: () -> Unit
+    onShowTag: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    FloatingActionButtonMenu(
-        modifier = Modifier,
-        horizontalAlignment = Alignment.End,
-        expanded = fabExpanded,
-        button = {
-            ToggleFloatingActionButton(
-                modifier = Modifier.animateFloatingActionButton(
-                    visible = true,
-                    alignment = Alignment.BottomEnd
-                ),
-                checked = fabExpanded,
-                onCheckedChange = onFabExpandedChanged
-            ) {
+    HorizontalFloatingToolbar(
+        expanded = true,
+        floatingActionButton = {
+            FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = onAdd) {
                 Icon(
-                    painter = painterResource(R.drawable.outline_edit_24),
+                    painter = painterResource(R.drawable.outline_add_24),
                     contentDescription = null
                 )
             }
-        }
+        },
+        floatingActionButtonPosition = FloatingToolbarHorizontalFabPosition.End,
+        colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+        modifier = modifier
     ) {
-        FabMenuItems.entries.forEach { fabMenuItems ->
-            FloatingActionButtonMenuItem(
-                onClick = {
-                    when (fabMenuItems) {
-                        FabMenuItems.Delete -> onDelete()
-                        FabMenuItems.Save -> onSave()
-                        FabMenuItems.Add -> onAdd()
-                    }
-                    onFabExpandedChanged(false)
-                },
-                icon = {
-                    Icon(
-                        painter = painterResource(fabMenuItems.getDrawableResId()),
-                        contentDescription = null
-                    )
-                },
-                text = { Text(text = fabMenuItems.name) }
+        IconButton(onClick = onDelete) {
+            Icon(painter = painterResource(R.drawable.outline_delete_24), contentDescription = null)
+        }
+        IconButton(onClick = onShowTag) {
+            Icon(
+                painter = painterResource(R.drawable.outline_add_tag_24),
+                contentDescription = null
             )
+        }
+        IconButton(onClick = onSave) {
+            Icon(painter = painterResource(R.drawable.outline_save_24), contentDescription = null)
         }
     }
 }
@@ -223,6 +256,11 @@ private fun VerseForm(
     onVerseNumberChanged: (index: Int, String) -> Unit,
     onVerseTextChanged: (index: Int, String) -> Unit,
     onDeleteVerseNumberAndText: (index: Int) -> Unit,
+    currentTagBeingEdited: String,
+    onTagChanged: (String) -> Unit,
+    onAddTag: (String) -> Unit,
+    onRemoveTag: (String) -> Unit,
+    tags: List<String>,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -237,9 +275,24 @@ private fun VerseForm(
 
         item {
             Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
+                modifier = Modifier.height(8.dp)
+            )
+        }
+
+        item {
+            Tags(
+                modifier = Modifier.fillMaxWidth(),
+                tag = currentTagBeingEdited,
+                onTagChanged = onTagChanged,
+                tags = tags,
+                onAddTag = onAddTag,
+                onRemoveTag = onRemoveTag,
+            )
+        }
+
+        item {
+            Spacer(
+                modifier = Modifier.height(8.dp)
             )
         }
 
@@ -256,9 +309,7 @@ private fun VerseForm(
 
         item {
             Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
+                modifier = Modifier.height(8.dp)
             )
         }
     }
@@ -315,6 +366,80 @@ private fun BookAndChapter(
             },
             modifier = Modifier.weight(0.4f)
         )
+    }
+}
+
+@Composable
+private fun Tags(
+    tag: String,
+    onTagChanged: (String) -> Unit,
+    tags: List<String>,
+    onAddTag: (String) -> Unit,
+    onRemoveTag: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var emptyTagError by remember { mutableStateOf(value = false) }
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = tag,
+            onValueChange = {
+                if (emptyTagError) emptyTagError = false
+
+                onTagChanged(it)
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            ),
+            isError = emptyTagError,
+            label = { Text(text = stringResource(R.string.label_add_tag)) },
+            supportingText = { if (emptyTagError) Text(text = stringResource(R.string.error_empty_tag)) },
+            trailingIcon = {
+                if (emptyTagError) {
+                    Icon(
+                        painter = painterResource(R.drawable.outline_error_24),
+                        contentDescription = null
+                    )
+                } else {
+                    IconButton(
+                        onClick = {
+                            if (tag.isEmpty()) emptyTagError = true else onAddTag(tag)
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.outline_check_24),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            tags.forEach { tag ->
+                InputChip(
+                    selected = false,
+                    onClick = { onRemoveTag(tag) },
+                    label = { Text(text = tag) },
+                    trailingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_x),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(InputChipDefaults.AvatarSize)
+                        )
+                    }
+                )
+            }
+        }
     }
 }
 
@@ -383,20 +508,5 @@ private fun EditableVerseNumberAndText(
             },
             modifier = Modifier.fillMaxWidth()
         )
-    }
-}
-
-private enum class FabMenuItems {
-    Delete,
-    Save,
-    Add,
-}
-
-@DrawableRes
-private fun FabMenuItems.getDrawableResId(): Int {
-    return when (this) {
-        FabMenuItems.Add -> R.drawable.outline_add_24
-        FabMenuItems.Delete -> R.drawable.outline_delete_24
-        FabMenuItems.Save -> R.drawable.outline_save_24
     }
 }

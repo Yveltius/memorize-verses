@@ -31,7 +31,8 @@ class AddVerseViewModel : ViewModel() {
                             book = verse.book,
                             chapter = verse.chapter.toString(),
                             verseNumberAndTextList = verse.verseText.toVerseNumberAndTextList(),
-                            verseBeingEdited = verse
+                            verseBeingEdited = verse,
+                            tags = verse.tags
                         )
                     }
                 }.onFailure {
@@ -75,6 +76,7 @@ class AddVerseViewModel : ViewModel() {
         viewModelScope.launch {
             when (uiState.value.verseBeingEdited) {
                 null -> {
+                    // no verse is being edited so this is a plain add
                     buildVerse().getOrNull()?.let { verse ->
                         _uiState.update {
                             it.copy(isSaving = true)
@@ -88,6 +90,8 @@ class AddVerseViewModel : ViewModel() {
                                         book = "",
                                         chapter = "",
                                         verseNumberAndTextList = listOf(AddVerseNumberAndText()),
+                                        tags = listOf(),
+                                        currentTagBeingEdited = "",
                                         recentlySavedVerse = verse,
                                         encounteredSaveError = false
                                     )
@@ -169,12 +173,35 @@ class AddVerseViewModel : ViewModel() {
         }
     }
 
+    fun onTagChanged(tag: String) {
+        _uiState.update {
+            it.copy(currentTagBeingEdited = tag)
+        }
+    }
+
+    fun onAddTag(tag: String) {
+        if (tag.isEmpty()) { /*show an error */ }
+        if (!uiState.value.tags.any { it.equals(tag, ignoreCase = false) }) {
+            _uiState.update {
+                it.copy(tags = it.tags + tag, currentTagBeingEdited = "")
+            }
+        }
+    }
+
+    fun onRemoveTag(tagToRemove: String) {
+        _uiState.update {
+            it.copy(tags = it.tags.filter { tag -> tag != tagToRemove })
+        }
+    }
+
     data class UiState(
         val isSaving: Boolean = false,
         val verseBeingEdited: Verse? = null,
         val book: String = "",
         val chapter: String = "",
         val verseNumberAndTextList: List<AddVerseNumberAndText> = listOf(AddVerseNumberAndText()),
+        val currentTagBeingEdited: String = "",
+        val tags: List<String> = listOf(),
         val recentlySavedVerse: Verse? = null,
         val encounteredSaveError: Boolean = false,
         val failedToLoadVerseForEdit: Boolean = false
@@ -200,7 +227,7 @@ class AddVerseViewModel : ViewModel() {
                 book = uiState.value.book,
                 chapter = uiState.value.chapter.toInt(),
                 verseText = uiState.value.verseNumberAndTextList.map { it.transform() },
-                tags = listOf(),
+                tags = uiState.value.tags,
                 uuid = uiState.value.verseBeingEdited?.uuid ?: UUID.randomUUID()
             )
         )
