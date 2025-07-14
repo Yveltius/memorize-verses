@@ -3,6 +3,7 @@ package com.yveltius.memorize.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yveltius.versememorization.domain.verses.AddVersesUseCase
+import com.yveltius.versememorization.domain.verses.GetAllTagsUseCase
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.domain.verses.UpdateVerseUseCase
 import com.yveltius.versememorization.entity.verses.Verse
@@ -18,9 +19,23 @@ class AddVerseViewModel : ViewModel() {
     private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
     private val addVersesUseCase: AddVersesUseCase by inject(AddVersesUseCase::class.java)
     private val updateVerseUseCase: UpdateVerseUseCase by inject(UpdateVerseUseCase::class.java)
+    private val getAllTagsUseCase: GetAllTagsUseCase by inject(GetAllTagsUseCase::class.java)
 
     private val _uiState = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState
+
+    fun getAllTags() {
+        viewModelScope.launch {
+            getAllTagsUseCase.getAllTags()
+                .onSuccess { tags ->
+                   _uiState.update {
+                       it.copy(
+                           allTags = tags
+                       )
+                   }
+                }
+        }
+    }
 
     fun getVerseBeingEdited(uuid: UUID) {
         viewModelScope.launch {
@@ -91,7 +106,6 @@ class AddVerseViewModel : ViewModel() {
                                         chapter = "",
                                         verseNumberAndTextList = listOf(AddVerseNumberAndText()),
                                         tags = listOf(),
-                                        currentTagBeingEdited = "",
                                         recentlySavedVerse = verse,
                                         encounteredSaveError = false
                                     )
@@ -173,17 +187,10 @@ class AddVerseViewModel : ViewModel() {
         }
     }
 
-    fun onTagChanged(tag: String) {
-        _uiState.update {
-            it.copy(currentTagBeingEdited = tag)
-        }
-    }
-
     fun onAddTag(tag: String) {
-        if (tag.isEmpty()) { /*show an error */ }
         if (!uiState.value.tags.any { it.equals(tag, ignoreCase = false) }) {
             _uiState.update {
-                it.copy(tags = it.tags + tag, currentTagBeingEdited = "")
+                it.copy(tags = it.tags + tag)
             }
         }
     }
@@ -200,8 +207,8 @@ class AddVerseViewModel : ViewModel() {
         val book: String = "",
         val chapter: String = "",
         val verseNumberAndTextList: List<AddVerseNumberAndText> = listOf(AddVerseNumberAndText()),
-        val currentTagBeingEdited: String = "",
         val tags: List<String> = listOf(),
+        val allTags: List<String> = listOf(),
         val recentlySavedVerse: Verse? = null,
         val encounteredSaveError: Boolean = false,
         val failedToLoadVerseForEdit: Boolean = false

@@ -9,13 +9,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.FloatingToolbarHorizontalFabPosition
 import androidx.compose.material3.HorizontalFloatingToolbar
@@ -66,6 +74,10 @@ fun AddVerseScreen(
         verseUUID?.let {
             addVerseViewModel.getVerseBeingEdited(uuid = verseUUID)
         }
+    }
+
+    LaunchedEffect(Unit) {
+        addVerseViewModel.getAllTags()
     }
 
     LaunchedEffect(uiState.recentlySavedVerse) {
@@ -129,11 +141,10 @@ fun AddVerseScreen(
                 onVerseTextChanged = addVerseViewModel::onVerseTextChanged,
                 onDeleteVerseNumberAndText = addVerseViewModel::onDeleteVerseNumberAndText,
                 onBackPress = onBackPress,
-                currentTagBeingEdited = uiState.currentTagBeingEdited,
-                onTagChanged = addVerseViewModel::onTagChanged,
                 onAddTag = addVerseViewModel::onAddTag,
                 onRemoveTag = addVerseViewModel::onRemoveTag,
                 tags = uiState.tags,
+                allTags = uiState.allTags,
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxSize()
@@ -153,11 +164,10 @@ private fun Content(
     onVerseTextChanged: (Int, String) -> Unit,
     onDeleteVerseNumberAndText: (Int) -> Unit,
     onBackPress: () -> Unit,
-    currentTagBeingEdited: String,
-    onTagChanged: (String) -> Unit,
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
     tags: List<String>,
+    allTags: List<String>,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -176,11 +186,10 @@ private fun Content(
             onVerseNumberChanged = onVerseNumberChanged,
             onVerseTextChanged = onVerseTextChanged,
             onDeleteVerseNumberAndText = onDeleteVerseNumberAndText,
-            currentTagBeingEdited = currentTagBeingEdited,
-            onTagChanged = onTagChanged,
             onAddTag = onAddTag,
             onRemoveTag = onRemoveTag,
             tags = tags,
+            allTags = allTags
         )
     }
 }
@@ -256,11 +265,10 @@ private fun VerseForm(
     onVerseNumberChanged: (index: Int, String) -> Unit,
     onVerseTextChanged: (index: Int, String) -> Unit,
     onDeleteVerseNumberAndText: (index: Int) -> Unit,
-    currentTagBeingEdited: String,
-    onTagChanged: (String) -> Unit,
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
     tags: List<String>,
+    allTags: List<String>,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -282,9 +290,8 @@ private fun VerseForm(
         item {
             Tags(
                 modifier = Modifier.fillMaxWidth(),
-                tag = currentTagBeingEdited,
-                onTagChanged = onTagChanged,
                 tags = tags,
+                allTags = allTags,
                 onAddTag = onAddTag,
                 onRemoveTag = onRemoveTag,
             )
@@ -369,54 +376,93 @@ private fun BookAndChapter(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Tags(
-    tag: String,
-    onTagChanged: (String) -> Unit,
     tags: List<String>,
+    allTags: List<String>,
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var emptyTagError by remember { mutableStateOf(value = false) }
+    var expanded by remember { mutableStateOf(value = false) }
+    val textFieldState = rememberTextFieldState()
     Column(modifier = modifier) {
-        OutlinedTextField(
-            value = tag,
-            onValueChange = {
-                if (emptyTagError) emptyTagError = false
-
-                onTagChanged(it)
-            },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next
-            ),
-            isError = emptyTagError,
-            label = { Text(text = stringResource(R.string.label_add_tag)) },
-            supportingText = { if (emptyTagError) Text(text = stringResource(R.string.error_empty_tag)) },
-            trailingIcon = {
-                if (emptyTagError) {
-                    Icon(
-                        painter = painterResource(R.drawable.outline_error_24),
-                        contentDescription = null
-                    )
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
+            OutlinedTextField(
+                state = textFieldState,
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                isError = emptyTagError,
+                label = { Text(text = stringResource(R.string.label_add_tag)) },
+                supportingText = if (emptyTagError) {
+                    { Text(text = stringResource(R.string.error_empty_tag)) }
                 } else {
-                    IconButton(
-                        onClick = {
-                            if (tag.isEmpty()) emptyTagError = true else onAddTag(tag)
-                        }
-                    ) {
+                    null
+                },
+                trailingIcon = {
+                    if (emptyTagError) {
                         Icon(
-                            painter = painterResource(R.drawable.outline_check_24),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
+                            painter = painterResource(R.drawable.outline_error_24),
+                            contentDescription = null
+                        )
+                    } else {
+                        IconButton(
+                            onClick = {
+                                if (textFieldState.text.isEmpty()) {
+                                    emptyTagError = true
+                                } else {
+                                    onAddTag(textFieldState.text.toString())
+                                    textFieldState.clearText()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.outline_check_24),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
+            )
+
+            val filteredTags = allTags
+                .filter { tag ->
+                    tags.none { filterTag -> filterTag == tag }
+                }
+                .filter { tag ->
+                    tag.contains(textFieldState.text, ignoreCase = true)
+                }
+
+            if (filteredTags.isNotEmpty()) {
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.heightIn(max = 280.dp)
+                ) {
+                    filteredTags.forEach { tagSelection ->
+                        DropdownMenuItem(
+                            onClick = {
+                                textFieldState.setTextAndPlaceCursorAtEnd(tagSelection)
+                                expanded = false
+                            },
+                            text = { Text(text = tagSelection) }
                         )
                     }
                 }
             }
-        )
+        }
 
         Spacer(modifier = Modifier.height(4.dp))
 
