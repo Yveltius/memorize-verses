@@ -8,22 +8,20 @@ import com.yveltius.versememorization.entity.util.toJsonString
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.java.KoinJavaComponent.inject
 import java.util.UUID
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.DefaultAsserter.assertTrue
+import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
-@RunWith(JUnit4::class)
 class VerseRepositoryImplTest {
-    @Before
+    @BeforeTest
     fun before() {
         startKoin {
             modules(
@@ -48,7 +46,7 @@ class VerseRepositoryImplTest {
         }
     }
 
-    @After
+    @AfterTest
     fun after() {
         stopKoin()
     }
@@ -62,7 +60,7 @@ class VerseRepositoryImplTest {
 
         val expected = 2
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -77,7 +75,7 @@ class VerseRepositoryImplTest {
 
         val expected = 1
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -91,7 +89,7 @@ class VerseRepositoryImplTest {
 
         val expected = 3
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -105,7 +103,7 @@ class VerseRepositoryImplTest {
 
         val expected = 2
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -125,7 +123,7 @@ class VerseRepositoryImplTest {
 
         val expected = 8
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -146,7 +144,7 @@ class VerseRepositoryImplTest {
 
         val expected = 2
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -167,7 +165,7 @@ class VerseRepositoryImplTest {
 
         val expected = 2
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -194,7 +192,7 @@ class VerseRepositoryImplTest {
         runBlocking { verseRepository.addVerse(verse).getOrThrow() }
 
         val actual = runBlocking { verseRepository.getVerse(uuid = newVerseUUID).getOrThrow() }
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $verse, actual: $actual",
             actual == verse
         )
@@ -213,7 +211,7 @@ class VerseRepositoryImplTest {
 
         val expected = 0
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -233,7 +231,7 @@ class VerseRepositoryImplTest {
 
         val expected = 1
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -251,7 +249,7 @@ class VerseRepositoryImplTest {
 
         val expected = 2
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -269,7 +267,7 @@ class VerseRepositoryImplTest {
 
         val expected = 2
         val actual = filteredVerses.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -278,8 +276,13 @@ class VerseRepositoryImplTest {
     @Test
     fun `initial read from empty or non-existent file should return empty list`() {
         val verseRepository: VerseRepository by inject(VerseRepository::class.java, named("Empty"))
-        runBlocking { verseRepository.getVerses().getOrThrow() }
-        Assert.assertTrue(true)
+        val verses = runBlocking { verseRepository.getVerses().getOrThrow() }
+        val expected = 0
+        val actual = verses.size
+        assertTrue(
+            message = "Expected: $expected, Actual: $actual",
+            expected == actual
+        )
     }
     //endregion
 
@@ -306,7 +309,7 @@ class VerseRepositoryImplTest {
 
         val expected = versesBeforeRemoval.count() - 1
         val actual = versesAfterRemoval.count()
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -319,7 +322,7 @@ class VerseRepositoryImplTest {
         val versesBeforeRemoval = runBlocking { verseRepository.getVerses().getOrThrow() }
         val verseToRemove = versesBeforeRemoval.random()
 
-        Assert.assertThrows(Throwable::class.java) {
+        assertFailsWith(Throwable::class) {
             runBlocking {
                 verseRepository.removeVerse(
                     verse = verseToRemove.copy(uuid = UUID.randomUUID())
@@ -342,7 +345,7 @@ class VerseRepositoryImplTest {
             verseRepository.addVerse(verse = verseBeingTestedAgainst).getOrThrow()
         }
 
-        Assert.assertThrows(Throwable::class.java) {
+        assertFailsWith(Throwable::class) {
             runBlocking {
                 verseRepository.removeVerse(verse = verseBeingTestedAgainst).getOrThrow()
             }
@@ -377,7 +380,7 @@ class VerseRepositoryImplTest {
 
         val expected = versesBeforeAddition.size + 1
         val actual = versesAfterAddition.size
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $actual",
             actual == expected
         )
@@ -409,7 +412,7 @@ class VerseRepositoryImplTest {
             verseRepository.getVerses(book = "John", chapter = 15, verseNumber = 7).getOrThrow()
                 .first()
         }
-        Assert.assertTrue(
+        assertTrue(
             "Expected verse count: $expected, actual: $verse",
             verse == expected
         )
@@ -438,7 +441,7 @@ class VerseRepositoryImplTest {
         val retrievedEditedVerseFromRepo =
             runBlocking { verseRepository.getVerse(uuid = editedVerse.uuid) }
 
-        Assert.assertTrue(
+        assertTrue(
             "Expected: $editedVerse, Actual: $retrievedEditedVerseFromRepo",
             editedVerse == retrievedEditedVerseFromRepo.getOrThrow()
         )
@@ -474,7 +477,7 @@ class VerseRepositoryImplTest {
         val retrievedEditedVerseFromRepo =
             runBlocking { verseRepository.getVerse(uuid = editedVerse.uuid) }
 
-        Assert.assertTrue(
+        assertTrue(
             "Expected: $editedVerse, Actual: $retrievedEditedVerseFromRepo",
             editedVerse == retrievedEditedVerseFromRepo.getOrThrow()
         )
