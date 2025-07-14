@@ -19,9 +19,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,6 +53,7 @@ import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VerseListScreen(
     onAddVerse: () -> Unit,
@@ -93,54 +98,71 @@ fun MainView(
             }
         }
     ) { contentPadding ->
-        Content(
-            verses = uiState.verses,
-            contentPadding = contentPadding,
-            lazyListState = lazyListState,
-            onEdit = onEdit,
-            onShowDeletePrompt = {
-                verseToBeDeleted = it
-                showDeletePrompt = true
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        )
-
-        if (showDeletePrompt) {
-            AlertDialog(
-                onDismissRequest = {
-                    verseToBeDeleted = null
-                    showDeletePrompt = false
+        Surface(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Content(
+                verses = uiState.verses,
+                contentPadding = contentPadding,
+                lazyListState = lazyListState,
+                onEdit = onEdit,
+                onShowDeletePrompt = {
+                    verseToBeDeleted = it
+                    showDeletePrompt = true
                 },
-                dismissButton = {
-                    TextButton(onClick = {
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+
+            if (showDeletePrompt) {
+                DeleteVerseAlertDialog(
+                    onDismissRequest = {
                         verseToBeDeleted = null
                         showDeletePrompt = false
-                    }) {
-                        Text(text = stringResource(R.string.cancel))
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        onDeleteConfirmed(verseToBeDeleted!!)
+                    },
+                    onConfirmRequest = { verse ->
+                        onDeleteConfirmed(verse)
                         showDeletePrompt = false
-                    }) {
-                        Text(text = stringResource(R.string.confirm))
-                    }
-                },
-                text = {
-                    Text(
-                        text = stringResource(
-                            id = R.string.dialog_delete_verse_description,
-                            verseToBeDeleted?.getVerseString()
-                                ?: stringResource(R.string.dialog_delete_verse_description)
-                        )
-                    )
-                }
+                    },
+                    verseToBeDeleted = verseToBeDeleted
+                )
+            }
+        }
+
+    }
+}
+
+@Composable
+private fun DeleteVerseAlertDialog(
+    onDismissRequest: () -> Unit,
+    onConfirmRequest: (Verse) -> Unit,
+    verseToBeDeleted: Verse?,
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        dismissButton = {
+            TextButton(
+                onClick = onDismissRequest
+            ) {
+                Text(text = stringResource(R.string.cancel))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirmRequest(verseToBeDeleted!!) }) {
+                Text(text = stringResource(R.string.confirm))
+            }
+        },
+        text = {
+            Text(
+                text = stringResource(
+                    id = R.string.dialog_delete_verse_description,
+                    verseToBeDeleted?.getVerseString()
+                        ?: stringResource(R.string.dialog_delete_verse_description)
+                )
             )
         }
-    }
+    )
 }
 
 @Composable
@@ -199,43 +221,19 @@ fun VerseView(
                         expanded = !expanded
                     }
                 ) {
-                    Box {
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(text = stringResource(R.string.edit)) },
-                                onClick = {
-                                    onEdit(verse)
-                                    expanded = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.outline_edit_24),
-                                        contentDescription = null
-                                    )
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(text = stringResource(R.string.delete)) },
-                                onClick = {
-                                    onShowDeletePrompt(verse)
-                                    expanded = false
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.outline_delete_24),
-                                        contentDescription = null
-                                    )
-                                }
-                            )
+                    VerseDropdownMenu(
+                        verse = verse,
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        onEdit = {
+                            onEdit(verse)
+                            expanded = false
+                        },
+                        onShowDeletePrompt = {
+                            onShowDeletePrompt(verse)
+                            expanded = false
                         }
-                        Icon(
-                            painter = painterResource(R.drawable.outline_more_vert_24),
-                            contentDescription = null
-                        )
-                    }
+                    )
                 }
             }
             Text(
@@ -252,6 +250,50 @@ fun VerseView(
                 textAlign = TextAlign.End
             )
         }
+    }
+}
+
+@Composable
+fun VerseDropdownMenu(
+    verse: Verse,
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    onEdit: (Verse) -> Unit,
+    onShowDeletePrompt: (Verse) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+    ) {
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = onDismissRequest
+        ) {
+            DropdownMenuItem(
+                text = { Text(text = stringResource(R.string.edit)) },
+                onClick = { onEdit(verse) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.outline_edit_24),
+                        contentDescription = null
+                    )
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(text = stringResource(R.string.delete)) },
+                onClick = { onShowDeletePrompt(verse) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.outline_delete_24),
+                        contentDescription = null
+                    )
+                }
+            )
+        }
+        Icon(
+            painter = painterResource(R.drawable.outline_more_vert_24),
+            contentDescription = null
+        )
     }
 }
 

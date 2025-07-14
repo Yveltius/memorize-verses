@@ -1,11 +1,9 @@
 package com.yveltius.versememorization.entity.verses
 
-import org.junit.Assert
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import kotlin.test.DefaultAsserter.assertTrue
+import kotlin.test.Test
 
-@RunWith(JUnit4::class)
+
 class VerseTest {
     @Test
     fun `verse with 1 verse should return single element string`() {
@@ -21,10 +19,10 @@ class VerseTest {
             tags = listOf()
         )
 
-        val expected = "7"
+        val expected = "John 15:7"
         val actual = verse.getVerseString()
 
-        Assert.assertTrue("Expected: $expected, Actual: $actual", actual == expected)
+        assertTrue("Expected: $expected, Actual: $actual", actual == expected)
     }
 
     @Test
@@ -42,10 +40,10 @@ class VerseTest {
             tags = listOf()
         )
 
-        val expected = "7-8"
+        val expected = "John 15:7-8"
         val actual = verse.getVerseString()
 
-        Assert.assertTrue("Expected: $expected, Actual: $actual", actual == expected)
+        assertTrue("Expected: $expected, Actual: $actual", actual == expected)
     }
 
     @Test
@@ -57,9 +55,9 @@ class VerseTest {
             tags = listOf()
         )
 
-        val expected = "1-100"
+        val expected = "John 15:1-100"
         val actual = verse.getVerseString()
 
-        Assert.assertTrue("Expected: $expected, Actual: $actual", actual == expected)
+        assertTrue("Expected: $expected, Actual: $actual", actual == expected)
     }
 }

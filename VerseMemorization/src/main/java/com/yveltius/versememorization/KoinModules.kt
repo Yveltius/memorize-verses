@@ -4,9 +4,12 @@ import com.yveltius.versememorization.data.util.JsonFileReader
 import com.yveltius.versememorization.data.util.JsonFileReaderImpl
 import com.yveltius.versememorization.data.util.Log
 import com.yveltius.versememorization.data.util.VerseMemorizationLog
+import com.yveltius.versememorization.data.verses.TagsRepository
+import com.yveltius.versememorization.data.verses.TagsRepositoryImpl
 import com.yveltius.versememorization.data.verses.VerseRepository
 import com.yveltius.versememorization.data.verses.VerseRepositoryImpl
 import com.yveltius.versememorization.domain.verses.AddVersesUseCase
+import com.yveltius.versememorization.domain.verses.GetAllTagsUseCase
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.domain.verses.RemoveVersesUseCase
 import com.yveltius.versememorization.domain.verses.UpdateVerseUseCase
@@ -20,6 +23,13 @@ object KoinModules {
                 jsonFileReader = get()
             )
         }
+
+        factory<TagsRepository> {
+            TagsRepositoryImpl(
+                log = get(),
+                verseRepository = get()
+            )
+        }
     }
 
     private val useCaseModule = module {
@@ -30,6 +40,8 @@ object KoinModules {
         factory { RemoveVersesUseCase(verseRepository = get()) }
 
         factory { UpdateVerseUseCase(verseRepository = get()) }
+
+        factory { GetAllTagsUseCase(tagsRepository = get()) }
     }
 
     private val miscModule = module {
