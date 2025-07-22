@@ -2,6 +2,7 @@ package com.yveltius.memorize
 
 import android.app.Application
 import com.yveltius.memorize.viewmodels.AddVerseViewModel
+import com.yveltius.memorize.viewmodels.ChooseNextWordViewModel
 import com.yveltius.memorize.viewmodels.VersesListViewModel
 import com.yveltius.versememorization.KoinModules
 import org.koin.android.ext.koin.androidContext
@@ -21,5 +22,6 @@ class VerseMemorizationApp: Application() {
     private val viewModelModule = module {
         factory { VersesListViewModel() }
         factory { AddVerseViewModel() }
+        factory { ChooseNextWordViewModel() }
     }
 }
