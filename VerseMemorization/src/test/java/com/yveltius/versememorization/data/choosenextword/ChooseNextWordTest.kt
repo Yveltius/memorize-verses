@@ -132,6 +132,14 @@ class ChooseNextWordTest {
         )
     }
 
+    @Test
+    fun `should be able to parse text ending in a space`() {
+        doTestWithGivenText(
+            givenText = "Example using Moses\' body ",
+            expected = listOf("Example", "using", "Moses\'", "body")
+        )
+    }
+
     private fun doTestWithGivenText(givenText: String, expected: List<String>) {
         val actual = ChooseNextWord().parseText(text = givenText)
 

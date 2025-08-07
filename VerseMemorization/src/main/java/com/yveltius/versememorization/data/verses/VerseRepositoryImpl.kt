@@ -93,6 +93,26 @@ internal class VerseRepositoryImpl(
         return doWork(
             failureMessage = "Failed to add verse(\n${verse.toPrettyJsonString()}\n)"
         ) {
+            assert(verse.verseText.isNotEmpty()) {
+                "verseText list should not be empty when trying to add a verse."
+            }
+
+            assert(verse.book.isNotEmpty()) {
+                "book should not be empty when trying to add a verse."
+            }
+
+            assert(verse.chapter > 0) {
+                "chapter should be greater than zero."
+            }
+
+            assert(verse.verseText.all { verseNumberAndText -> verseNumberAndText.verseNumber > 0 }) {
+                "All VerseTextAndNumber objects should have verseNumbers greater than zero."
+            }
+
+            assert(verse.verseText.all { verseNumberAndText -> verseNumberAndText.text.isNotEmpty() }) {
+                "All VerseNumberAndText objects should have text that isn\'t empty."
+            }
+
             val verses = getVersesFromFile().getOrThrow()
 
             val versesWithAddition = listOf(*verses.toTypedArray(), verse)

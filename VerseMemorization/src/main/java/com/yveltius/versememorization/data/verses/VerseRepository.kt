@@ -41,6 +41,7 @@ internal interface VerseRepository {
         tags: List<String> = listOf()
     ): Result<List<Verse>>
 
+    @Throws(Throwable::class)
     suspend fun addVerse(verse: Verse): Result<Unit>
 
     suspend fun removeVerse(verse: Verse): Result<Unit>

@@ -330,6 +330,8 @@ private fun BookAndChapter(
     onChapterChanged: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val hasChapterError = chapter.isNotEmpty() && (chapter.toIntOrNull() == null || (chapter.toIntOrNull() ?: -1) <= 0)
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -365,9 +367,9 @@ private fun BookAndChapter(
                     overflow = TextOverflow.Ellipsis
                 )
             },
-            isError = chapter.toIntOrNull() == null && chapter.isNotEmpty(),
+            isError = hasChapterError,
             supportingText = {
-                if (chapter.toIntOrNull() == null && chapter.isNotEmpty()) {
+                if (hasChapterError) {
                     Text(text = stringResource(R.string.input_error))
                 }
             },
@@ -498,6 +500,9 @@ private fun EditableVerseNumberAndText(
     onDeleteVerseNumberAndText: (index: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val currentVerseNumber = verseNumberAndText.verseNumber.toIntOrNull()
+    val isError = verseNumberAndText.verseNumber.isNotEmpty() && (currentVerseNumber == null || (currentVerseNumber ?: -1) <= 0)
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -528,9 +533,9 @@ private fun EditableVerseNumberAndText(
                     text = stringResource(R.string.verse_number)
                 )
             },
-            isError = verseNumberAndText.verseNumber.toIntOrNull() == null && verseNumberAndText.verseNumber.isNotEmpty(),
+            isError = isError,
             supportingText = {
-                if (verseNumberAndText.verseNumber.toIntOrNull() == null && verseNumberAndText.verseNumber.isNotEmpty()) {
+                if (isError) {
                     Text(text = stringResource(R.string.input_error))
                 }
             },

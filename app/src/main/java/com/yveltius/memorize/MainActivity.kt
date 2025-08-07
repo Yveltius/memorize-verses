@@ -3,9 +3,6 @@ package com.yveltius.memorize
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,10 +11,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.compose.AppTheme
 import com.yveltius.memorize.ui.screens.AddVerseScreen
 import com.yveltius.memorize.ui.screens.ChooseNextWordScreen
 import com.yveltius.memorize.ui.screens.VerseListScreen
-import com.yveltius.memorize.ui.theme.MemorizeVersesTheme
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
@@ -95,7 +92,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    MemorizeVersesTheme {
+    AppTheme {
         Greeting("Android")
     }
 }

@@ -15,6 +15,7 @@ navigationComposeAndroid = "2.9.0"
 coreKtx = "1.16.0"
 koin = "4.1.0"
 material3 = "1.4.0-alpha17"
+googleFonts = "1.8.1"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -45,5 +46,6 @@ koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", versio
 koin-test-junit5 = { group = "io.insert-koin", name = "koin-test-juint5", version.ref = "koin" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesVersion" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "googleFonts" }
 
 [plugins]

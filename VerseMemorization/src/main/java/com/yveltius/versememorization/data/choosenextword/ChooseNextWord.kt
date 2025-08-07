@@ -7,6 +7,7 @@ class ChooseNextWord {
     fun parseText(text: String): List<String> {
         val parsedText = text
             .split(' ')
+            .filter { it.isNotEmpty() }
             .map { word -> if (word.first().isLowerCase() || !(word.first().isLetter())) word.trim('\'', '\"') else word }
             .map { word -> word.trim('.', '!', '?', ',', '(', ')', '\"', '[', ']', ';', ':', '…') }
         return parsedText

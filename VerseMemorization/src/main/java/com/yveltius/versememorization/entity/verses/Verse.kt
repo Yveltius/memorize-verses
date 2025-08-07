@@ -1,5 +1,6 @@
 package com.yveltius.versememorization.entity.verses
 
+import com.yveltius.versememorization.data.choosenextword.ChooseNextWord
 import com.yveltius.versememorization.entity.util.UUIDSerializer
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -22,6 +23,14 @@ data class Verse(
             else -> {
                 throw IllegalArgumentException("verseText list should not be empty.")
             }
+        }
+    }
+
+    fun getWords(): List<List<String>> {
+        val chooseNextWord = ChooseNextWord()
+
+        return verseText.map { (_, text) ->
+            chooseNextWord.parseText(text)
         }
     }
 }

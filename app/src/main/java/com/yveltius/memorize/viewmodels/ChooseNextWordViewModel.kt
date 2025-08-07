@@ -23,12 +23,19 @@ class ChooseNextWordViewModel: ViewModel() {
         _uiState.update {
             it.copy(isLoading = true)
         }
+
         viewModelScope.launch {
             getVersesUseCase.getVerse(uuid = UUID.fromString(verseUUIDString))
                 .onSuccess { verse ->
+                    val words = verse.getWords()
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            words = words,
+                            unusedWords = words,
+                            currentWords = words.firstOrNull() ?: listOf(),
+                            currentUnusedWords = words.firstOrNull() ?: listOf(),
                             verse = verse,
                         )
                     }
@@ -40,8 +47,10 @@ class ChooseNextWordViewModel: ViewModel() {
 
     data class UiState(
         val isLoading: Boolean = false,
-        val words: List<String> = listOf(),
-        val unusedWord: List<String> = listOf(),
+        val words: List<List<String>> = listOf(),
+        val unusedWords: List<List<String>> = listOf(),
+        val currentWords: List<String> = listOf(),
+        val currentUnusedWords: List<String> = listOf(),
         val verse: Verse? = null
     )
 }
