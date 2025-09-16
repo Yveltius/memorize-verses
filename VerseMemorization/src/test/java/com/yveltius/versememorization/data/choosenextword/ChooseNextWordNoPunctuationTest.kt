@@ -3,7 +3,7 @@ package com.yveltius.versememorization.data.choosenextword
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class ChooseNextWordTest {
+class ChooseNextWordNoPunctuationTest {
     @Test
     fun `simple sentence ending in period just has words returned`() {
         doTestWithGivenText(
