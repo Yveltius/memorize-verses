@@ -33,4 +33,12 @@ data class Verse(
             chooseNextWord.parseText(text)
         }
     }
+
+    fun getWordsAndPunctuation(): List<List<String>> {
+        val chooseNextWord = ChooseNextWord()
+
+        return verseText.map { (_, text) ->
+            chooseNextWord.parseTextKeepingPunctuation(text)
+        }
+    }
 }
