@@ -32,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -54,7 +55,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yveltius.memorize.R
 import com.yveltius.memorize.ui.components.AppScaffold
+import com.yveltius.memorize.ui.components.AppTopBar
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
+import com.yveltius.memorize.ui.theme.AppTheme
 import com.yveltius.memorize.viewmodels.AddVerseViewModel
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
@@ -115,22 +118,21 @@ fun AddVerseScreen(
         }
     }
 
-    AppScaffold(
-        floatingActionButton = {
-            AddVerseBottomBar(
-                onAdd = addVerseViewModel::onAddVerseNumberAndText,
-                onDelete = addVerseViewModel::onDeleteLastVerseNumberAndText,
-                onSave = addVerseViewModel::addVerse,
-                onShowTag = { }
-            )
-        },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
-        }
-    ) { paddingValues ->
-        Surface(
-            modifier = Modifier.fillMaxSize()
-        ) {
+    AppTheme {
+        Scaffold(
+            floatingActionButton = {
+                AddVerseBottomBar(
+                    onAdd = addVerseViewModel::onAddVerseNumberAndText,
+                    onDelete = addVerseViewModel::onDeleteLastVerseNumberAndText,
+                    onSave = addVerseViewModel::addVerse,
+                    onShowTag = { }
+                )
+            },
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
+            },
+            topBar = { AppTopBar(onBackPress = onBackPress)}
+        ) { paddingValues ->
             Content(
                 book = uiState.book,
                 chapter = uiState.chapter,
@@ -140,7 +142,6 @@ fun AddVerseScreen(
                 onVerseNumberChanged = addVerseViewModel::onVerseNumberChanged,
                 onVerseTextChanged = addVerseViewModel::onVerseTextChanged,
                 onDeleteVerseNumberAndText = addVerseViewModel::onDeleteVerseNumberAndText,
-                onBackPress = onBackPress,
                 onAddTag = addVerseViewModel::onAddTag,
                 onRemoveTag = addVerseViewModel::onRemoveTag,
                 tags = uiState.tags,
@@ -163,7 +164,6 @@ private fun Content(
     onVerseNumberChanged: (Int, String) -> Unit,
     onVerseTextChanged: (Int, String) -> Unit,
     onDeleteVerseNumberAndText: (Int) -> Unit,
-    onBackPress: () -> Unit,
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
     tags: List<String>,
@@ -173,10 +173,6 @@ private fun Content(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        TopBar(
-            onBackPress = onBackPress
-        )
-
         VerseForm(
             book = book,
             onBookChanged = onBookChanged,
@@ -194,28 +190,7 @@ private fun Content(
     }
 }
 
-@Composable
-fun TopBar(
-    onBackPress: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = onBackPress
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.outline_arrow_back_24),
-                contentDescription = null
-            )
-        }
-    }
-}
+
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

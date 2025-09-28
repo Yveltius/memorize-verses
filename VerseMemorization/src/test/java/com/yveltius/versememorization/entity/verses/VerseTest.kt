@@ -64,7 +64,6 @@ class VerseTest {
 
     @Test
     fun `verse should return a list of lists of words`() {
-        val chooseNextWord = ChooseNextWord()
         val verse = Verse(
             book = "Romans",
             chapter = 12,
@@ -91,6 +90,56 @@ class VerseTest {
         assertTrue(
             "Expected: $expected,\nActual: $actual",
             expected.containsAll(actual)
+        )
+    }
+
+    @Test
+    fun `verse hasMultiple returns true when there are multiple verses`() {
+        val verse = Verse(
+            book = "Romans",
+            chapter = 12,
+            verseText = listOf(
+                VerseNumberAndText(
+                    verseNumber = 1,
+                    text = "Therefore I exhort you, brothers, by the mercies of God, to present your bodies as a sacrifice—living, holy, and pleasing to God, which is your spiritual service of worship."
+                ),
+                VerseNumberAndText(
+                    verseNumber = 2,
+                    text = "And do not be conformed to this world, but be transformed by the renewing of your mind, so that you may approve what the will of God is, that which is good and pleasing and perfect."
+                )
+            ),
+            tags = listOf("Discipleship Verse", "Obedience to Christ")
+        )
+
+        val expected = true
+        val actual = verse.hasMultipleVerses
+
+        assertTrue(
+            "Expected: $expected, Actual: $actual",
+            expected == actual
+        )
+    }
+
+    @Test
+    fun `verse hasMultiple returns false when there are not multiple verses`() {
+        val verse = Verse(
+            book = "Romans",
+            chapter = 12,
+            verseText = listOf(
+                VerseNumberAndText(
+                    verseNumber = 1,
+                    text = "Therefore I exhort you, brothers, by the mercies of God, to present your bodies as a sacrifice—living, holy, and pleasing to God, which is your spiritual service of worship."
+                ),
+            ),
+            tags = listOf("Discipleship Verse", "Obedience to Christ")
+        )
+
+        val expected = false
+        val actual = verse.hasMultipleVerses
+
+        assertTrue(
+            "Expected: $expected, Actual: $actual",
+            expected == actual
         )
     }
 }

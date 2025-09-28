@@ -2,7 +2,6 @@ package com.yveltius.memorize.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yveltius.versememorization.data.choosenextword.ChooseNextWord
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.entity.verses.Verse
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +13,6 @@ import java.util.UUID
 
 class ChooseNextWordViewModel: ViewModel() {
     private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
-    private val chooseNextWord = ChooseNextWord()
 
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState
@@ -65,6 +63,8 @@ class ChooseNextWordViewModel: ViewModel() {
             val nextWord = uiState.value.currentWords.first { it.isGuessable && !it.isGuessed }
             val nextWordIndex = uiState.value.currentWords.indexOf(nextWord)
             val currentWordsIndex = uiState.value.words.indexOf(uiState.value.currentWords)
+            val currentGuessCount = uiState.value.currentGuessCount + 1
+
             if (word == nextWord.string) {
                 updateCurrentWordsForCorrectGuess(
                     currentWordsListIndex = currentWordsIndex,
@@ -73,6 +73,7 @@ class ChooseNextWordViewModel: ViewModel() {
             } else {
                 _uiState.update {
                     it.copy(
+                        currentGuessCount = currentGuessCount,
                         lastGuessIncorrect = true
                     )
                 }
@@ -107,10 +108,13 @@ class ChooseNextWordViewModel: ViewModel() {
             wordBeingUpdateIndex + 1
         }
 
+        val currentGuessCount = uiState.value.currentGuessCount + 1
+
         _uiState.update {
             it.copy(
                 words = newWords,
                 currentWords = newCurrentWords,
+                currentGuessCount = currentGuessCount,
                 availableGuesses = newAvailableGuesses,
                 currentGuessIndex = currentGuessIndex,
                 lastGuessIncorrect = false
@@ -118,16 +122,12 @@ class ChooseNextWordViewModel: ViewModel() {
         }
     }
 
-    fun clearError() {
-        _uiState.update {
-            it.copy(lastGuessIncorrect = false)
-        }
-    }
-
     data class UiState(
         val isLoading: Boolean = false,
         val words: List<List<WordGuessState>> = listOf(),
+        val guessCounts: List<Int> = listOf(),
         val currentWords: List<WordGuessState> = listOf(),
+        val currentGuessCount: Int = 0,
         val availableGuesses: List<WordGuessState> = listOf(),
         val currentGuessIndex: Int = 0,
         val verse: Verse? = null,

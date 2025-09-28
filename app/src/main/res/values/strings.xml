@@ -26,4 +26,6 @@
 
     <string name="input_error">Please check your input.</string>
     <string name="input_cant_be_empty">Input cannot be empty.</string>
+
+    <string name="encountered_error_for_verse_string">Encountered Verse Error</string>
 </resources>

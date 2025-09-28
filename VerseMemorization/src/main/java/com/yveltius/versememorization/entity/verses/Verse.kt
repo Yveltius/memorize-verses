@@ -13,6 +13,8 @@ data class Verse(
     val tags: List<String>,
     @Serializable(with = UUIDSerializer::class) val uuid: UUID = UUID.randomUUID()
 ) {
+    val hasMultipleVerses: Boolean = verseText.size > 1
+
     fun getVerseString(): String {
         assert(verseText.isNotEmpty()) {
             "No Verse object should have an empty list of verseText(s)"
