@@ -73,7 +73,7 @@ class ChooseNextWordViewModel: ViewModel() {
             } else {
                 _uiState.update {
                     it.copy(
-                        error = true
+                        lastGuessIncorrect = true
                     )
                 }
             }
@@ -101,19 +101,26 @@ class ChooseNextWordViewModel: ViewModel() {
 
         val newAvailableGuesses = newCurrentWords.filter { wordGuessState -> !wordGuessState.isGuessed && wordGuessState.isGuessable }.distinct().shuffled()
 
+        val currentGuessIndex = if ((wordBeingUpdateIndex + 1) >= uiState.value.words[currentWordsListIndex].size) {
+            -1
+        } else {
+            wordBeingUpdateIndex + 1
+        }
+
         _uiState.update {
             it.copy(
                 words = newWords,
                 currentWords = newCurrentWords,
                 availableGuesses = newAvailableGuesses,
-                error = false
+                currentGuessIndex = currentGuessIndex,
+                lastGuessIncorrect = false
             )
         }
     }
 
     fun clearError() {
         _uiState.update {
-            it.copy(error = false)
+            it.copy(lastGuessIncorrect = false)
         }
     }
 
@@ -122,8 +129,9 @@ class ChooseNextWordViewModel: ViewModel() {
         val words: List<List<WordGuessState>> = listOf(),
         val currentWords: List<WordGuessState> = listOf(),
         val availableGuesses: List<WordGuessState> = listOf(),
+        val currentGuessIndex: Int = 0,
         val verse: Verse? = null,
-        val error: Boolean = false
+        val lastGuessIncorrect: Boolean = false
     )
 
     data class WordGuessState(

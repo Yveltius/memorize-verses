@@ -10,7 +10,7 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.example.compose.AppTheme
+import com.yveltius.memorize.ui.theme.AppTheme
 
 @Composable
 fun AppScaffold(
