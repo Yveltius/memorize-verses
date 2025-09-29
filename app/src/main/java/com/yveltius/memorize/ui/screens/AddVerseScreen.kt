@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -125,7 +127,8 @@ fun AddVerseScreen(
                     onAdd = addVerseViewModel::onAddVerseNumberAndText,
                     onDelete = addVerseViewModel::onDeleteLastVerseNumberAndText,
                     onSave = addVerseViewModel::addVerse,
-                    onShowTag = { }
+                    onShowTag = { },
+                    modifier = Modifier.imePadding()
                 )
             },
             snackbarHost = {
@@ -479,7 +482,7 @@ private fun EditableVerseNumberAndText(
     val isError = verseNumberAndText.verseNumber.isNotEmpty() && (currentVerseNumber == null || (currentVerseNumber ?: -1) <= 0)
 
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().imePadding(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(

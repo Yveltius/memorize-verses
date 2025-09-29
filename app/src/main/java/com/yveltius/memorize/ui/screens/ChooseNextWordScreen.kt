@@ -64,7 +64,7 @@ fun ChooseNextWordScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = uiState.verse?.getVerseString()
+                            text = uiState.verse?.getVerseString(index = uiState.words.indexOf(uiState.currentWords))
                                 ?: stringResource(R.string.encountered_error_for_verse_string),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold

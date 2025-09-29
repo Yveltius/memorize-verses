@@ -15,11 +15,12 @@ data class Verse(
 ) {
     val hasMultipleVerses: Boolean = verseText.size > 1
 
-    fun getVerseString(): String {
+    fun getVerseString(index: Int? = null): String {
         assert(verseText.isNotEmpty()) {
             "No Verse object should have an empty list of verseText(s)"
         }
         return when {
+            index != null -> "$book $chapter:${verseText[index].verseNumber}"
             verseText.size == 1 -> "$book $chapter:${verseText.first().verseNumber}"
             verseText.size > 1 -> "$book $chapter:${verseText.first().verseNumber}-${verseText.last().verseNumber}"
             else -> {
