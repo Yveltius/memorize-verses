@@ -23,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.yveltius.memorize.R
 import com.yveltius.memorize.ui.components.AppScaffold
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
+import com.yveltius.memorize.ui.theme.AppTheme
 import com.yveltius.memorize.viewmodels.VersesListViewModel
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
@@ -81,55 +83,56 @@ fun MainView(
     var verseToBeDeleted: Verse? by remember { mutableStateOf(value = null) }
 
     val lazyListState = rememberLazyListState()
-    AppScaffold(
-        modifier = Modifier.fillMaxSize(),
-        floatingActionButton = {
-            AnimatedVisibility(visible = lazyListState.lastScrolledBackward || !lazyListState.canScrollBackward) {
-                FloatingActionButton(
-                    onClick = onFabClick,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.outline_add_24),
-                        contentDescription = null
+    AppTheme {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            floatingActionButton = {
+                AnimatedVisibility(visible = lazyListState.lastScrolledBackward || !lazyListState.canScrollBackward) {
+                    FloatingActionButton(
+                        onClick = onFabClick,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.outline_add_24),
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
+        ) { contentPadding ->
+            Surface(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Content(
+                    verses = uiState.verses,
+                    contentPadding = contentPadding,
+                    lazyListState = lazyListState,
+                    onEdit = onEdit,
+                    onShowDeletePrompt = {
+                        verseToBeDeleted = it
+                        showDeletePrompt = true
+                    },
+                    onGoToChooseNextWord = onGoToChooseNextWord,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
+
+                if (showDeletePrompt) {
+                    DeleteVerseAlertDialog(
+                        onDismissRequest = {
+                            verseToBeDeleted = null
+                            showDeletePrompt = false
+                        },
+                        onConfirmRequest = { verse ->
+                            onDeleteConfirmed(verse)
+                            showDeletePrompt = false
+                        },
+                        verseToBeDeleted = verseToBeDeleted
                     )
                 }
             }
         }
-    ) { contentPadding ->
-        Surface(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Content(
-                verses = uiState.verses,
-                contentPadding = contentPadding,
-                lazyListState = lazyListState,
-                onEdit = onEdit,
-                onShowDeletePrompt = {
-                    verseToBeDeleted = it
-                    showDeletePrompt = true
-                },
-                onGoToChooseNextWord = onGoToChooseNextWord,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            )
-
-            if (showDeletePrompt) {
-                DeleteVerseAlertDialog(
-                    onDismissRequest = {
-                        verseToBeDeleted = null
-                        showDeletePrompt = false
-                    },
-                    onConfirmRequest = { verse ->
-                        onDeleteConfirmed(verse)
-                        showDeletePrompt = false
-                    },
-                    verseToBeDeleted = verseToBeDeleted
-                )
-            }
-        }
-
     }
 }
 

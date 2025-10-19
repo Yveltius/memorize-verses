@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,7 +36,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,7 +54,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yveltius.memorize.R
-import com.yveltius.memorize.ui.components.AppScaffold
 import com.yveltius.memorize.ui.components.AppTopBar
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
@@ -128,7 +125,6 @@ fun AddVerseScreen(
                     onDelete = addVerseViewModel::onDeleteLastVerseNumberAndText,
                     onSave = addVerseViewModel::addVerse,
                     onShowTag = { },
-                    modifier = Modifier.imePadding()
                 )
             },
             snackbarHost = {
@@ -252,27 +248,12 @@ private fun VerseForm(
     LazyColumn(
         modifier = modifier
             .fillMaxWidth()
+            .imePadding()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             BookAndChapter(book, onBookChanged, chapter, onChapterChanged)
-        }
-
-        item {
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-        }
-
-        item {
-            Tags(
-                modifier = Modifier.fillMaxWidth(),
-                tags = tags,
-                allTags = allTags,
-                onAddTag = onAddTag,
-                onRemoveTag = onRemoveTag,
-            )
         }
 
         item {
@@ -297,6 +278,16 @@ private fun VerseForm(
                 modifier = Modifier.height(8.dp)
             )
         }
+
+        item {
+            Tags(
+                modifier = Modifier.fillMaxWidth(),
+                tags = tags,
+                allTags = allTags,
+                onAddTag = onAddTag,
+                onRemoveTag = onRemoveTag,
+            )
+        }
     }
 }
 
@@ -318,6 +309,7 @@ private fun BookAndChapter(
         OutlinedTextField(
             value = book,
             onValueChange = onBookChanged,
+            singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Next
@@ -335,6 +327,7 @@ private fun BookAndChapter(
         OutlinedTextField(
             value = chapter,
             onValueChange = onChapterChanged,
+            singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Next
@@ -482,7 +475,7 @@ private fun EditableVerseNumberAndText(
     val isError = verseNumberAndText.verseNumber.isNotEmpty() && (currentVerseNumber == null || (currentVerseNumber ?: -1) <= 0)
 
     Column(
-        modifier = modifier.fillMaxWidth().imePadding(),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
@@ -502,6 +495,7 @@ private fun EditableVerseNumberAndText(
         OutlinedTextField(
             value = verseNumberAndText.verseNumber,
             onValueChange = { onVerseNumberChanged(index, it) },
+            singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Next
@@ -525,7 +519,6 @@ private fun EditableVerseNumberAndText(
             onValueChange = { onVerseTextChanged(index, it) },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next
             ),
             label = {
                 Text(text = stringResource(R.string.verse_text))

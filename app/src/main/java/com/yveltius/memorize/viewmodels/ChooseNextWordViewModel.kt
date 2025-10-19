@@ -38,10 +38,7 @@ class ChooseNextWordViewModel: ViewModel() {
                     //todo probably need an assert for list size of at least one
                     val currentWords = words.firstOrNull() ?: listOf()
 
-                    val availableGuesses = currentWords
-                        .filter { wordGuessState -> !wordGuessState.isGuessed && wordGuessState.isGuessable }
-                        .distinct()
-                        .shuffled()
+                    val availableGuesses = currentWords.getAvailableGuesses()
 
                     _uiState.update {
                         it.copy(
@@ -100,7 +97,11 @@ class ChooseNextWordViewModel: ViewModel() {
             }
         }
 
-        val newAvailableGuesses = newCurrentWords.filter { wordGuessState -> !wordGuessState.isGuessed && wordGuessState.isGuessable }.distinct().shuffled()
+        val newAvailableGuesses = newCurrentWords
+            .filter { wordGuessState -> !wordGuessState.isGuessed && wordGuessState.isGuessable }
+            .distinct()
+            .take(8)
+            .shuffled()
 
         val currentGuessIndex = if ((wordBeingUpdateIndex + 1) >= uiState.value.words[currentWordsListIndex].size) {
             -1
@@ -110,6 +111,12 @@ class ChooseNextWordViewModel: ViewModel() {
 
         val currentGuessCount = uiState.value.currentGuessCount + 1
 
+        val showNextButton = newCurrentWords.all { it.isGuessed || !it.isGuessable }
+                && (currentWordsListIndex < uiState.value.words.size - 1)
+
+        val showFinishButton = newCurrentWords.all { it.isGuessed || !it.isGuessable }
+                && currentWordsListIndex >= (uiState.value.words.size - 1)
+
         _uiState.update {
             it.copy(
                 words = newWords,
@@ -117,9 +124,39 @@ class ChooseNextWordViewModel: ViewModel() {
                 currentGuessCount = currentGuessCount,
                 availableGuesses = newAvailableGuesses,
                 currentGuessIndex = currentGuessIndex,
-                lastGuessIncorrect = false
+                lastGuessIncorrect = false,
+                showNextButton = showNextButton,
+                showFinishButton = showFinishButton
             )
         }
+    }
+
+    fun goNext() {
+        val nextWords = uiState.value.let {
+            it.words[it.words.indexOf(it.currentWords) + 1]
+        }
+
+        val availableGuesses = nextWords.getAvailableGuesses()
+
+        _uiState.update {
+            it.copy(
+                words = it.words,
+                currentWords = nextWords,
+                availableGuesses = availableGuesses
+            )
+        }
+    }
+
+    fun onComplete() {
+        //todo need to add something for when the user completes this section
+    }
+
+    fun List<WordGuessState>.getAvailableGuesses(): List<WordGuessState> {
+        return this
+            .filter { wordGuessState -> !wordGuessState.isGuessed && wordGuessState.isGuessable }
+            .distinct()
+            .take(8)
+            .shuffled()
     }
 
     data class UiState(
@@ -131,7 +168,9 @@ class ChooseNextWordViewModel: ViewModel() {
         val availableGuesses: List<WordGuessState> = listOf(),
         val currentGuessIndex: Int = 0,
         val verse: Verse? = null,
-        val lastGuessIncorrect: Boolean = false
+        val lastGuessIncorrect: Boolean = false,
+        val showNextButton: Boolean = false,
+        val showFinishButton: Boolean = false
     )
 
     data class WordGuessState(
