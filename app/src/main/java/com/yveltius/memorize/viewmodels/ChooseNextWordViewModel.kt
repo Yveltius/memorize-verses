@@ -142,7 +142,11 @@ class ChooseNextWordViewModel: ViewModel() {
             it.copy(
                 words = it.words,
                 currentWords = nextWords,
-                availableGuesses = availableGuesses
+                availableGuesses = availableGuesses,
+                guessCounts = it.guessCounts + it.currentGuessCount,
+                currentGuessCount = 0,
+                showNextButton = false,
+                showFinishButton = false
             )
         }
     }
