@@ -1,5 +1,6 @@
 package com.yveltius.memorize.ui.screens
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.clearText
@@ -32,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -58,6 +61,7 @@ import com.yveltius.memorize.ui.components.AppTopBar
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
 import com.yveltius.memorize.viewmodels.AddVerseViewModel
+import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import java.util.UUID
@@ -130,7 +134,7 @@ fun AddVerseScreen(
             snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState)
             },
-            topBar = { AppTopBar(onBackPress = onBackPress)}
+            topBar = { AppTopBar(onBackPress = onBackPress) }
         ) { paddingValues ->
             Content(
                 book = uiState.book,
@@ -188,7 +192,6 @@ private fun Content(
         )
     }
 }
-
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -299,7 +302,9 @@ private fun BookAndChapter(
     onChapterChanged: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val hasChapterError = chapter.isNotEmpty() && (chapter.toIntOrNull() == null || (chapter.toIntOrNull() ?: -1) <= 0)
+    val hasChapterError =
+        chapter.isNotEmpty() && (chapter.toIntOrNull() == null || (chapter.toIntOrNull()
+            ?: -1) <= 0)
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -472,63 +477,121 @@ private fun EditableVerseNumberAndText(
     modifier: Modifier = Modifier
 ) {
     val currentVerseNumber = verseNumberAndText.verseNumber.toIntOrNull()
-    val isError = verseNumberAndText.verseNumber.isNotEmpty() && (currentVerseNumber == null || (currentVerseNumber ?: -1) <= 0)
+    val isError = verseNumberAndText.verseNumber.isNotEmpty() && ((currentVerseNumber ?: -1) <= 0)
 
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
+        AnnotatedVersePreview(
+            verseNumberAndText = verseNumberAndText.transform(),
+            onDeleteVerseNumberAndText = { onDeleteVerseNumberAndText(index) },
             modifier = Modifier.fillMaxWidth()
-        ) {
+        )
+
+        EditableVerseNumber(
+            verseNumberAndText = verseNumberAndText,
+            onVerseNumberChanged = onVerseNumberChanged,
+            index = index,
+            isError = isError,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        EditableVerseText(
+            verseNumberAndText = verseNumberAndText,
+            onVerseTextChanged = onVerseTextChanged,
+            index = index,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun EditableVerseText(
+    verseNumberAndText: AddVerseViewModel.AddVerseNumberAndText,
+    onVerseTextChanged: (Int, String) -> Unit,
+    index: Int,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = verseNumberAndText.verseText,
+        onValueChange = { onVerseTextChanged(index, it) },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Next
+        ),
+        label = {
+            Text(text = stringResource(R.string.verse_text))
+        },
+        supportingText = {
+            if (verseNumberAndText.verseText.isEmpty()) {
+                Text(text = stringResource(R.string.input_cant_be_empty))
+            }
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun EditableVerseNumber(
+    verseNumberAndText: AddVerseViewModel.AddVerseNumberAndText,
+    onVerseNumberChanged: (Int, String) -> Unit,
+    index: Int,
+    isError: Boolean,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = verseNumberAndText.verseNumber,
+        onValueChange = { onVerseNumberChanged(index, it) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Next
+        ),
+        label = {
             Text(
-                text = buildAnnotatedVerse(listOf(verseNumberAndText.transform())),
-                modifier = Modifier.fillMaxWidth(),
-                overflow = TextOverflow.Ellipsis,
-                maxLines = 1
+                text = stringResource(R.string.verse_number)
             )
+        },
+        isError = isError,
+        supportingText = {
+            if (isError) {
+                Text(text = stringResource(R.string.input_error))
+            }
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun AnnotatedVersePreview(
+    verseNumberAndText: VerseNumberAndText,
+    onDeleteVerseNumberAndText: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = buildAnnotatedVerse(listOf(verseNumberAndText)),
+            modifier = Modifier.weight(1f),
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1
+        )
+        IconButton(onClick = onDeleteVerseNumberAndText) {
             Icon(
                 painter = painterResource(R.drawable.outline_delete_24),
                 contentDescription = null,
-                modifier = Modifier.clickable { onDeleteVerseNumberAndText(index) })
+                modifier = Modifier.size(24.dp)
+            )
         }
-        OutlinedTextField(
-            value = verseNumberAndText.verseNumber,
-            onValueChange = { onVerseNumberChanged(index, it) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            ),
-            label = {
-                Text(
-                    text = stringResource(R.string.verse_number)
-                )
-            },
-            isError = isError,
-            supportingText = {
-                if (isError) {
-                    Text(text = stringResource(R.string.input_error))
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = verseNumberAndText.verseText,
-            onValueChange = { onVerseTextChanged(index, it) },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-            ),
-            label = {
-                Text(text = stringResource(R.string.verse_text))
-            },
-            supportingText = {
-                if (verseNumberAndText.verseText.isEmpty()) {
-                    Text(text = stringResource(R.string.input_cant_be_empty))
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 }
