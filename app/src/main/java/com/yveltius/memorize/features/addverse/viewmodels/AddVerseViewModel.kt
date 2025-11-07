@@ -1,4 +1,4 @@
-package com.yveltius.memorize.viewmodels
+package com.yveltius.memorize.features.addverse.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,14 +12,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent.inject
+import org.koin.java.KoinJavaComponent
 import java.util.UUID
 
 class AddVerseViewModel : ViewModel() {
-    private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
-    private val addVersesUseCase: AddVersesUseCase by inject(AddVersesUseCase::class.java)
-    private val updateVerseUseCase: UpdateVerseUseCase by inject(UpdateVerseUseCase::class.java)
-    private val getAllTagsUseCase: GetAllTagsUseCase by inject(GetAllTagsUseCase::class.java)
+    private val getVersesUseCase: GetVersesUseCase by KoinJavaComponent.inject(GetVersesUseCase::class.java)
+    private val addVersesUseCase: AddVersesUseCase by KoinJavaComponent.inject(AddVersesUseCase::class.java)
+    private val updateVerseUseCase: UpdateVerseUseCase by KoinJavaComponent.inject(
+        UpdateVerseUseCase::class.java
+    )
+    private val getAllTagsUseCase: GetAllTagsUseCase by KoinJavaComponent.inject(GetAllTagsUseCase::class.java)
 
     private val _uiState = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState
@@ -199,6 +201,12 @@ class AddVerseViewModel : ViewModel() {
         _uiState.update {
             it.copy(tags = it.tags.filter { tag -> tag != tagToRemove })
         }
+    }
+
+    fun getSnapshotOfVerse(): Verse? {
+        val snapshotVerse = buildVerse().getOrNull()
+
+        return snapshotVerse
     }
 
     data class UiState(

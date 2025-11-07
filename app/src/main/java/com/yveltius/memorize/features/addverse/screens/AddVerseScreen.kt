@@ -1,7 +1,6 @@
-package com.yveltius.memorize.ui.screens
+package com.yveltius.memorize.features.addverse.screens
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -22,6 +21,7 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -40,10 +40,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,11 +62,13 @@ import com.yveltius.memorize.R
 import com.yveltius.memorize.ui.components.AppTopBar
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
-import com.yveltius.memorize.viewmodels.AddVerseViewModel
+import com.yveltius.memorize.features.addverse.viewmodels.AddVerseViewModel
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import java.util.UUID
+import com.yveltius.memorize.features.addverse.components.EditableVerseNumber
+import com.yveltius.memorize.features.addverse.components.Tags
 
 @Composable
 fun AddVerseScreen(
@@ -75,6 +79,8 @@ fun AddVerseScreen(
     val uiState by addVerseViewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    var showConfirmDeletionDialog by remember { mutableStateOf(value = false) }
+    var indexOfVerseAndNumberSelectedForDeletion by remember { mutableIntStateOf(value = -1) }
 
     LaunchedEffect(Unit) {
         verseUUID?.let {
@@ -144,7 +150,10 @@ fun AddVerseScreen(
                 onChapterChanged = addVerseViewModel::onChapterChanged,
                 onVerseNumberChanged = addVerseViewModel::onVerseNumberChanged,
                 onVerseTextChanged = addVerseViewModel::onVerseTextChanged,
-                onDeleteVerseNumberAndText = addVerseViewModel::onDeleteVerseNumberAndText,
+                onDeleteVerseNumberAndText = {
+                    indexOfVerseAndNumberSelectedForDeletion = it
+                    showConfirmDeletionDialog = true
+                },
                 onAddTag = addVerseViewModel::onAddTag,
                 onRemoveTag = addVerseViewModel::onRemoveTag,
                 tags = uiState.tags,
@@ -153,8 +162,61 @@ fun AddVerseScreen(
                     .padding(paddingValues)
                     .fillMaxSize()
             )
+
+            if (showConfirmDeletionDialog) {
+                val verseStringForDialog = addVerseViewModel.getSnapshotOfVerse()?.getVerseString(index = indexOfVerseAndNumberSelectedForDeletion)
+
+                if (verseStringForDialog != null) {
+                    ConfirmDeletionDialog(
+                        verseAndNumberName = verseStringForDialog,
+                        onConfirmDelete = {
+                            if (indexOfVerseAndNumberSelectedForDeletion >= 0) {
+                                addVerseViewModel.onDeleteVerseNumberAndText(
+                                    indexOfVerseAndNumberSelectedForDeletion
+                                )
+                            }
+                            indexOfVerseAndNumberSelectedForDeletion = -1
+                            showConfirmDeletionDialog = false
+                        },
+                        onDismissRequest = {
+                            indexOfVerseAndNumberSelectedForDeletion = -1
+                            showConfirmDeletionDialog = false
+                        }
+                    )
+                } else {
+                    indexOfVerseAndNumberSelectedForDeletion = -1
+                    showConfirmDeletionDialog = false
+                }
+            }
         }
     }
+}
+
+@Composable
+fun ConfirmDeletionDialog(
+    verseAndNumberName: String,
+    onConfirmDelete: () -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(text = stringResource(R.string.dialog_title_delete_verse_number_and_text, verseAndNumberName))
+        },
+        text = {
+            Text(text = stringResource(R.string.dialog_text_delete_verse_number_and_text, verseAndNumberName))
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirmDelete) {
+                Text(text = stringResource(R.string.confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(text = stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable
@@ -354,119 +416,6 @@ private fun BookAndChapter(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun Tags(
-    tags: List<String>,
-    allTags: List<String>,
-    onAddTag: (String) -> Unit,
-    onRemoveTag: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var emptyTagError by remember { mutableStateOf(value = false) }
-    var expanded by remember { mutableStateOf(value = false) }
-    val textFieldState = rememberTextFieldState()
-    Column(modifier = modifier) {
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = it }
-        ) {
-            OutlinedTextField(
-                state = textFieldState,
-                lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
-                ),
-                isError = emptyTagError,
-                label = { Text(text = stringResource(R.string.label_add_tag)) },
-                supportingText = if (emptyTagError) {
-                    { Text(text = stringResource(R.string.error_empty_tag)) }
-                } else {
-                    null
-                },
-                trailingIcon = {
-                    if (emptyTagError) {
-                        Icon(
-                            painter = painterResource(R.drawable.outline_error_24),
-                            contentDescription = null
-                        )
-                    } else {
-                        IconButton(
-                            onClick = {
-                                if (textFieldState.text.isEmpty()) {
-                                    emptyTagError = true
-                                } else {
-                                    onAddTag(textFieldState.text.toString())
-                                    textFieldState.clearText()
-                                }
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.outline_check_24),
-                                contentDescription = null,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-                }
-            )
-
-            val filteredTags = allTags
-                .filter { tag ->
-                    tags.none { filterTag -> filterTag == tag }
-                }
-                .filter { tag ->
-                    tag.contains(textFieldState.text, ignoreCase = true)
-                }
-
-            if (filteredTags.isNotEmpty()) {
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier.heightIn(max = 280.dp)
-                ) {
-                    filteredTags.forEach { tagSelection ->
-                        DropdownMenuItem(
-                            onClick = {
-                                textFieldState.setTextAndPlaceCursorAtEnd(tagSelection)
-                                expanded = false
-                            },
-                            text = { Text(text = tagSelection) }
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            tags.forEach { tag ->
-                InputChip(
-                    selected = false,
-                    onClick = { onRemoveTag(tag) },
-                    label = { Text(text = tag) },
-                    trailingIcon = {
-                        Icon(
-                            painter = painterResource(R.drawable.icon_x),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(InputChipDefaults.AvatarSize)
-                        )
-                    }
-                )
-            }
-        }
-    }
-}
-
 @Composable
 private fun EditableVerseNumberAndText(
     index: Int,
@@ -533,37 +482,6 @@ private fun EditableVerseText(
         supportingText = {
             if (verseNumberAndText.verseText.isEmpty()) {
                 Text(text = stringResource(R.string.input_cant_be_empty))
-            }
-        },
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun EditableVerseNumber(
-    verseNumberAndText: AddVerseViewModel.AddVerseNumberAndText,
-    onVerseNumberChanged: (Int, String) -> Unit,
-    index: Int,
-    isError: Boolean,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = verseNumberAndText.verseNumber,
-        onValueChange = { onVerseNumberChanged(index, it) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Number,
-            imeAction = ImeAction.Next
-        ),
-        label = {
-            Text(
-                text = stringResource(R.string.verse_number)
-            )
-        },
-        isError = isError,
-        supportingText = {
-            if (isError) {
-                Text(text = stringResource(R.string.input_error))
             }
         },
         modifier = modifier
