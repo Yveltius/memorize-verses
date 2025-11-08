@@ -8,6 +8,7 @@ import com.yveltius.versememorization.entity.util.toJsonString
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.assertThrows
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.core.qualifier.named
@@ -416,6 +417,116 @@ class VerseRepositoryImplTest {
             "Expected verse count: $expected, actual: $verse",
             verse == expected
         )
+    }
+
+    @Test
+    fun `exception is thrown when attempting to add a verse with no text`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        val verse = Verse(
+            book = "John",
+            chapter = 15,
+            verseText = listOf(),
+            tags = listOf("Discipleship Verses", "Prayer")
+        )
+
+        assertThrows<Throwable> {
+            runBlocking {
+                verseRepository.addVerse(verse).getOrThrow()
+            }
+        }
+    }
+
+    @Test
+    fun `exception is thrown when attempting to add verse with empty book`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        val verse = Verse(
+            book = "",
+            chapter = 15,
+            verseText = listOf(
+                VerseNumberAndText(
+                    verseNumber = 7,
+                    text = "If you remain in Me, and My words remain in you, ask whatever you want and it will be done for you."
+                )
+            ),
+            tags = listOf("Discipleship Verses", "Prayer")
+        )
+
+        assertThrows<Throwable> {
+            runBlocking {
+                verseRepository.addVerse(verse).getOrThrow()
+            }
+        }
+    }
+
+    @Test
+    fun `exception is thrown when attempting to add verse with chapter number less than or equal to zero`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        val verse = Verse(
+            book = "John",
+            chapter = -15,
+            verseText = listOf(
+                VerseNumberAndText(
+                    verseNumber = 7,
+                    text = "If you remain in Me, and My words remain in you, ask whatever you want and it will be done for you."
+                )
+            ),
+            tags = listOf("Discipleship Verses", "Prayer")
+        )
+
+        assertThrows<Throwable> {
+            runBlocking {
+                verseRepository.addVerse(verse).getOrThrow()
+            }
+        }
+    }
+
+    @Test
+    fun `exception is thrown when attempting to add verse with empty text attribute for any verseText item`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        val verse = Verse(
+            book = "John",
+            chapter = 15,
+            verseText = listOf(
+                VerseNumberAndText(
+                    verseNumber = 7,
+                    text = ""
+                )
+            ),
+            tags = listOf("Discipleship Verses", "Prayer")
+        )
+
+        assertThrows<Throwable> {
+            runBlocking {
+                verseRepository.addVerse(verse).getOrThrow()
+            }
+        }
+    }
+
+    @Test
+    fun `exception is thrown when attempting to add verse with verseNumber attribute less than or equal to zero for any verseText item`() {
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        val verse = Verse(
+            book = "John",
+            chapter = 15,
+            verseText = listOf(
+                VerseNumberAndText(
+                    verseNumber = -7,
+                    text = "If you remain in Me, and My words remain in you, ask whatever you want and it will be done for you."
+                )
+            ),
+            tags = listOf("Discipleship Verses", "Prayer")
+        )
+
+        assertThrows<Throwable> {
+            runBlocking {
+                verseRepository.addVerse(verse).getOrThrow()
+            }
+        }
     }
     //endregion
 

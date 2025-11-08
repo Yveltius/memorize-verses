@@ -10,7 +10,7 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.yveltius.memorize.ui.theme.MemorizeVersesTheme
+import com.yveltius.memorize.ui.theme.AppTheme
 
 @Composable
 fun AppScaffold(
@@ -25,7 +25,7 @@ fun AppScaffold(
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    MemorizeVersesTheme {
+    AppTheme {
         Scaffold(
             modifier,
             topBar,

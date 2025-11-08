@@ -2,6 +2,7 @@ package com.yveltius.memorize.ui.screens
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -23,7 +23,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -43,11 +42,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.yveltius.memorize.R
-import com.yveltius.memorize.ui.components.AppButton
 import com.yveltius.memorize.ui.components.AppScaffold
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
+import com.yveltius.memorize.ui.theme.AppTheme
 import com.yveltius.memorize.viewmodels.VersesListViewModel
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
@@ -58,6 +56,7 @@ import org.koin.androidx.compose.koinViewModel
 fun VerseListScreen(
     onAddVerse: () -> Unit,
     onEditVerse: (Verse) -> Unit,
+    onGoToChooseNextWord: (Verse) -> Unit,
     versesListViewModel: VersesListViewModel = koinViewModel()
 ) {
     val uiState by versesListViewModel.uiState.collectAsState()
@@ -67,7 +66,8 @@ fun VerseListScreen(
         uiState = uiState,
         onEdit = onEditVerse,
         onFabClick = onAddVerse,
-        onDeleteConfirmed = versesListViewModel::removeVerse
+        onDeleteConfirmed = versesListViewModel::removeVerse,
+        onGoToChooseNextWord = onGoToChooseNextWord,
     )
 }
 
@@ -76,60 +76,63 @@ fun MainView(
     uiState: VersesListViewModel.UiState,
     onFabClick: () -> Unit,
     onEdit: (Verse) -> Unit,
-    onDeleteConfirmed: (Verse) -> Unit
+    onDeleteConfirmed: (Verse) -> Unit,
+    onGoToChooseNextWord: (Verse) -> Unit,
 ) {
     var showDeletePrompt by remember { mutableStateOf(value = false) }
     var verseToBeDeleted: Verse? by remember { mutableStateOf(value = null) }
 
     val lazyListState = rememberLazyListState()
-    AppScaffold(
-        modifier = Modifier.fillMaxSize(),
-        floatingActionButton = {
-            AnimatedVisibility(visible = lazyListState.lastScrolledBackward || !lazyListState.canScrollBackward) {
-                FloatingActionButton(
-                    onClick = onFabClick,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.outline_add_24),
-                        contentDescription = null
+    AppTheme {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            floatingActionButton = {
+                AnimatedVisibility(visible = lazyListState.lastScrolledBackward || !lazyListState.canScrollBackward) {
+                    FloatingActionButton(
+                        onClick = onFabClick,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.outline_add_24),
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
+        ) { contentPadding ->
+            Surface(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Content(
+                    verses = uiState.verses,
+                    contentPadding = contentPadding,
+                    lazyListState = lazyListState,
+                    onEdit = onEdit,
+                    onShowDeletePrompt = {
+                        verseToBeDeleted = it
+                        showDeletePrompt = true
+                    },
+                    onGoToChooseNextWord = onGoToChooseNextWord,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
+
+                if (showDeletePrompt) {
+                    DeleteVerseAlertDialog(
+                        onDismissRequest = {
+                            verseToBeDeleted = null
+                            showDeletePrompt = false
+                        },
+                        onConfirmRequest = { verse ->
+                            onDeleteConfirmed(verse)
+                            showDeletePrompt = false
+                        },
+                        verseToBeDeleted = verseToBeDeleted
                     )
                 }
             }
         }
-    ) { contentPadding ->
-        Surface(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Content(
-                verses = uiState.verses,
-                contentPadding = contentPadding,
-                lazyListState = lazyListState,
-                onEdit = onEdit,
-                onShowDeletePrompt = {
-                    verseToBeDeleted = it
-                    showDeletePrompt = true
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            )
-
-            if (showDeletePrompt) {
-                DeleteVerseAlertDialog(
-                    onDismissRequest = {
-                        verseToBeDeleted = null
-                        showDeletePrompt = false
-                    },
-                    onConfirmRequest = { verse ->
-                        onDeleteConfirmed(verse)
-                        showDeletePrompt = false
-                    },
-                    verseToBeDeleted = verseToBeDeleted
-                )
-            }
-        }
-
     }
 }
 
@@ -172,6 +175,7 @@ fun Content(
     lazyListState: LazyListState,
     onEdit: (Verse) -> Unit,
     onShowDeletePrompt: (Verse) -> Unit,
+    onGoToChooseNextWord: (Verse) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -185,6 +189,7 @@ fun Content(
                 verse = verse,
                 onEdit = onEdit,
                 onShowDeletePrompt = onShowDeletePrompt,
+                onGoToChooseNextWord = onGoToChooseNextWord,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -196,11 +201,12 @@ fun VerseView(
     verse: Verse,
     onEdit: (Verse) -> Unit,
     onShowDeletePrompt: (Verse) -> Unit,
+    onGoToChooseNextWord: (Verse) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(value = false) }
     Card(
-        modifier = modifier
+        modifier = modifier.clickable(onClick = { onGoToChooseNextWord(verse) })
     ) {
         Column(
             modifier = Modifier
@@ -321,6 +327,7 @@ private fun VerseViewPreviewLight() {
         ),
         onEdit = {},
         onShowDeletePrompt = {},
+        onGoToChooseNextWord = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
@@ -351,6 +358,7 @@ private fun VerseViewPreviewDark() {
         ),
         onEdit = {},
         onShowDeletePrompt = {},
+        onGoToChooseNextWord = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
@@ -381,6 +389,7 @@ private fun VerseViewPreviewDarkNoTags() {
         ),
         onEdit = {},
         onShowDeletePrompt = {},
+        onGoToChooseNextWord = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
