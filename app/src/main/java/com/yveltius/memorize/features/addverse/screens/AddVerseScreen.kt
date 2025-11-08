@@ -59,6 +59,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yveltius.memorize.R
+import com.yveltius.memorize.features.addverse.components.BookAndChapter
 import com.yveltius.memorize.ui.components.AppTopBar
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
@@ -68,6 +69,7 @@ import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import java.util.UUID
 import com.yveltius.memorize.features.addverse.components.EditableVerseNumber
+import com.yveltius.memorize.features.addverse.components.EditableVerseText
 import com.yveltius.memorize.features.addverse.components.Tags
 
 @Composable
@@ -357,66 +359,6 @@ private fun VerseForm(
 }
 
 @Composable
-private fun BookAndChapter(
-    book: String,
-    onBookChanged: (String) -> Unit,
-    chapter: String,
-    onChapterChanged: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val hasChapterError =
-        chapter.isNotEmpty() && (chapter.toIntOrNull() == null || (chapter.toIntOrNull()
-            ?: -1) <= 0)
-
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        OutlinedTextField(
-            value = book,
-            onValueChange = onBookChanged,
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next
-            ),
-            label = {
-                Text(text = stringResource(R.string.book))
-            },
-            supportingText = {
-                if (book.isEmpty()) {
-                    Text(text = stringResource(R.string.input_cant_be_empty))
-                }
-            },
-            modifier = Modifier.weight(0.6f)
-        )
-        OutlinedTextField(
-            value = chapter,
-            onValueChange = onChapterChanged,
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            ),
-            label = {
-                Text(
-                    text = stringResource(R.string.chapter),
-                    overflow = TextOverflow.Ellipsis
-                )
-            },
-            isError = hasChapterError,
-            supportingText = {
-                if (hasChapterError) {
-                    Text(text = stringResource(R.string.input_error))
-                }
-            },
-            modifier = Modifier.weight(0.4f)
-        )
-    }
-}
-
-@Composable
 private fun EditableVerseNumberAndText(
     index: Int,
     verseNumberAndText: AddVerseViewModel.AddVerseNumberAndText,
@@ -460,32 +402,6 @@ private fun EditableVerseNumberAndText(
             modifier = Modifier.fillMaxWidth()
         )
     }
-}
-
-@Composable
-private fun EditableVerseText(
-    verseNumberAndText: AddVerseViewModel.AddVerseNumberAndText,
-    onVerseTextChanged: (Int, String) -> Unit,
-    index: Int,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = verseNumberAndText.verseText,
-        onValueChange = { onVerseTextChanged(index, it) },
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Text,
-            imeAction = ImeAction.Next
-        ),
-        label = {
-            Text(text = stringResource(R.string.verse_text))
-        },
-        supportingText = {
-            if (verseNumberAndText.verseText.isEmpty()) {
-                Text(text = stringResource(R.string.input_cant_be_empty))
-            }
-        },
-        modifier = modifier
-    )
 }
 
 @Composable
