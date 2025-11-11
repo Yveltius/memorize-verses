@@ -203,6 +203,12 @@ class AddVerseViewModel : ViewModel() {
         }
     }
 
+    fun onSelectForEdit(index: Int) {
+        _uiState.update {
+            it.copy(indexBeingEdited = index)
+        }
+    }
+
     fun getSnapshotOfVerse(): Verse? {
         val snapshotVerse = buildVerse().getOrNull()
 
@@ -212,6 +218,7 @@ class AddVerseViewModel : ViewModel() {
     data class UiState(
         val isSaving: Boolean = false,
         val verseBeingEdited: Verse? = null,
+        val indexBeingEdited: Int = 0,
         val book: String = "",
         val chapter: String = "",
         val verseNumberAndTextList: List<AddVerseNumberAndText> = listOf(AddVerseNumberAndText()),
