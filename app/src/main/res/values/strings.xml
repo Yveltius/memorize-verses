@@ -14,6 +14,8 @@
     <string name="add_verse_text">Add Verse</string>
     <string name="no_text">No Text</string>
 
+    <string name="no_verses">No verses to show</string>
+
     <string name="error_empty_tag">You cannot save an empty tag.</string>
 
     <string name="label_add_tag">Add Tag</string>

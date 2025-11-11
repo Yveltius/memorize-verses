@@ -178,6 +178,13 @@ fun Content(
     onGoToChooseNextWord: (Verse) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    if (verses.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(text = stringResource(R.string.no_verses), modifier = Modifier.align(alignment = Alignment.Center))
+        }
+    } else {
     LazyColumn(
         modifier = modifier,
         contentPadding = contentPadding,
@@ -193,6 +200,7 @@ fun Content(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
     }
 }
 
