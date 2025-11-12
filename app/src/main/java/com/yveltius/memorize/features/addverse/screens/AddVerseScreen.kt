@@ -1,8 +1,18 @@
 package com.yveltius.memorize.features.addverse.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
@@ -334,26 +345,43 @@ private fun VerseForm(
             )
         }
 
-        itemsIndexed(items = verseNumberAndTextList) { index, verseNumberAndText ->
-            if (index == indexBeingEdited) {
-                EditableVerseNumberAndText(
-                    index = index,
-                    verseNumberAndText = verseNumberAndText,
-                    onVerseNumberChanged = onVerseNumberChanged,
-                    onVerseTextChanged = onVerseTextChanged,
-                    onDeleteVerseNumberAndText = onDeleteVerseNumberAndText,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            } else {
-                NoEditVerseNumberAndText(
-                    index = index,
-                    verseNumberAndText = verseNumberAndText,
-                    onSelectForEdit = onSelectForEdit,
-                    onDeleteVerseNumberAndText = { onDeleteVerseNumberAndText(index) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        itemsIndexed(
+            items = verseNumberAndTextList,
+            key = { index, verseNumberAndText -> verseNumberAndText.verseNumber }
+        ) { index, verseNumberAndText ->
 
+            Crossfade(
+                targetState = indexBeingEdited,
+                animationSpec = tween(durationMillis = 3000)
+            ) { targetState ->
+                Box(
+                    modifier = Modifier
+                        .animateContentSize(spring(stiffness = Spring.StiffnessMedium))
+                ) {
+                    when (targetState) {
+                        index -> {
+                            EditableVerseNumberAndText(
+                                index = index,
+                                verseNumberAndText = verseNumberAndText,
+                                onVerseNumberChanged = onVerseNumberChanged,
+                                onVerseTextChanged = onVerseTextChanged,
+                                onDeleteVerseNumberAndText = onDeleteVerseNumberAndText,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        else -> {
+                            NoEditVerseNumberAndText(
+                                index = index,
+                                verseNumberAndText = verseNumberAndText,
+                                onSelectForEdit = onSelectForEdit,
+                                onDeleteVerseNumberAndText = { onDeleteVerseNumberAndText(index) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         item {
@@ -442,7 +470,8 @@ fun NoEditVerseNumberAndText(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .border(
                 width = 1.dp,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -498,7 +527,7 @@ private fun ContentPreview() {
         onVerseTextChanged = { index, text -> },
         onDeleteVerseNumberAndText = {},
         indexBeingEdited = 0,
-        onSelectForEdit = { index ->},
+        onSelectForEdit = { index -> },
         onAddTag = {},
         onRemoveTag = {},
         tags = listOf(),
