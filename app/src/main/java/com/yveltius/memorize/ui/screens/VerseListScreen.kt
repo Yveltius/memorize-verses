@@ -23,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -182,28 +184,32 @@ fun Content(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            Text(text = stringResource(R.string.no_verses), modifier = Modifier.align(alignment = Alignment.Center))
-        }
-    } else {
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        state = lazyListState
-    ) {
-        items(verses) { verse ->
-            VerseView(
-                verse = verse,
-                onEdit = onEdit,
-                onShowDeletePrompt = onShowDeletePrompt,
-                onGoToChooseNextWord = onGoToChooseNextWord,
-                modifier = Modifier.fillMaxWidth()
+            Text(
+                text = stringResource(R.string.no_verses),
+                modifier = Modifier.align(alignment = Alignment.Center)
             )
         }
-    }
+    } else {
+        LazyColumn(
+            modifier = modifier,
+            contentPadding = contentPadding,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            state = lazyListState
+        ) {
+            items(verses) { verse ->
+                VerseView(
+                    verse = verse,
+                    onEdit = onEdit,
+                    onShowDeletePrompt = onShowDeletePrompt,
+                    onGoToChooseNextWord = onGoToChooseNextWord,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VerseView(
     verse: Verse,
@@ -229,7 +235,7 @@ fun VerseView(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = verse.getVerseString())
+                Text(text = verse.getVerseString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 IconButton(
                     onClick = {
                         expanded = !expanded

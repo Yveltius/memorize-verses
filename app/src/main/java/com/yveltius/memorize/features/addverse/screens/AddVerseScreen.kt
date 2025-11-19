@@ -68,6 +68,7 @@ import java.util.UUID
 import com.yveltius.memorize.features.addverse.components.EditableVerseNumber
 import com.yveltius.memorize.features.addverse.components.EditableVerseText
 import com.yveltius.memorize.features.addverse.components.Tags
+import com.yveltius.memorize.ui.animation.AnimatedHeightCrossfade
 
 @Composable
 fun AddVerseScreen(
@@ -350,13 +351,12 @@ private fun VerseForm(
             key = { index, verseNumberAndText -> verseNumberAndText.verseNumber }
         ) { index, verseNumberAndText ->
 
-            Crossfade(
+            AnimatedHeightCrossfade(
                 targetState = indexBeingEdited,
-                animationSpec = tween(durationMillis = 3000)
+                animationSpec = tween(durationMillis = 100)
             ) { targetState ->
                 Box(
                     modifier = Modifier
-                        .animateContentSize(spring(stiffness = Spring.StiffnessMedium))
                 ) {
                     when (targetState) {
                         index -> {
