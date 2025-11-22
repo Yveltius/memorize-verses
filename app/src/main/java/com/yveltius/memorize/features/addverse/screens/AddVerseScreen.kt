@@ -1,18 +1,8 @@
 package com.yveltius.memorize.features.addverse.screens
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,15 +12,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.FloatingToolbarHorizontalFabPosition
-import androidx.compose.material3.HorizontalFloatingToolbar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +25,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,26 +42,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yveltius.memorize.R
 import com.yveltius.memorize.features.addverse.components.BookAndChapter
-import com.yveltius.memorize.ui.components.AppTopBar
-import com.yveltius.memorize.ui.text.buildAnnotatedVerse
-import com.yveltius.memorize.ui.theme.AppTheme
-import com.yveltius.memorize.features.addverse.viewmodels.AddVerseViewModel
-import com.yveltius.versememorization.entity.verses.VerseNumberAndText
-import kotlinx.coroutines.delay
-import org.koin.androidx.compose.koinViewModel
-import java.util.UUID
 import com.yveltius.memorize.features.addverse.components.EditableVerseNumber
 import com.yveltius.memorize.features.addverse.components.EditableVerseText
 import com.yveltius.memorize.features.addverse.components.Tags
-import com.yveltius.memorize.ui.animation.AnimatedHeightCrossfade
+import com.yveltius.memorize.features.addverse.viewmodels.AddVerseViewModel
+import com.yveltius.memorize.ui.components.BackButton
+import com.yveltius.memorize.ui.text.buildAnnotatedVerse
+import com.yveltius.memorize.ui.theme.AppTheme
+import com.yveltius.versememorization.entity.verses.VerseNumberAndText
+import kotlinx.coroutines.delay
+import java.util.UUID
 
 @Composable
 fun AddVerseScreen(
     onBackPress: () -> Unit,
     verseUUID: UUID? = null,
-    addVerseViewModel: AddVerseViewModel = koinViewModel()
+    addVerseViewModel: AddVerseViewModel = viewModel()
 ) {
     val uiState by addVerseViewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -129,18 +115,23 @@ fun AddVerseScreen(
 
     AppTheme {
         Scaffold(
-            floatingActionButton = {
-                AddVerseBottomBar(
-                    onAdd = addVerseViewModel::onAddVerseNumberAndText,
-                    onDelete = addVerseViewModel::onDeleteLastVerseNumberAndText,
-                    onSave = addVerseViewModel::addVerse,
-                    onShowTag = { },
-                )
-            },
+//            floatingActionButton = {
+//                AddVerseBottomBar(
+//                    onAdd = addVerseViewModel::onAddVerseNumberAndText,
+//                    onDelete = addVerseViewModel::onDeleteLastVerseNumberAndText,
+//                    onSave = addVerseViewModel::saveVerse,
+//                    onShowTag = { },
+//                )
+//            },
             snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState)
             },
-            topBar = { AppTopBar(onBackPress = onBackPress) }
+            topBar = {
+                TopBar(
+                    onBackPress = onBackPress,
+                    onSave = addVerseViewModel::saveVerse
+                )
+            }
         ) { paddingValues ->
             Content(
                 book = uiState.book,
@@ -156,6 +147,7 @@ fun AddVerseScreen(
                     indexOfVerseAndNumberSelectedForDeletion = it
                     showConfirmDeletionDialog = true
                 },
+                onAddVerse = addVerseViewModel::onAddVerseNumberAndText,
                 onAddTag = addVerseViewModel::onAddTag,
                 onRemoveTag = addVerseViewModel::onRemoveTag,
                 tags = uiState.tags,
@@ -166,38 +158,54 @@ fun AddVerseScreen(
             )
 
             if (showConfirmDeletionDialog) {
-                val verseStringForDialog = addVerseViewModel.getSnapshotOfVerse()
-                    ?.getVerseString(index = indexOfVerseAndNumberSelectedForDeletion)
+                val verseStringForDialog = addVerseViewModel
+                    .getSnapshotOfVerse(index = indexOfVerseAndNumberSelectedForDeletion)
+                    ?.getVerseString()
 
-                if (verseStringForDialog != null) {
-                    ConfirmDeletionDialog(
-                        verseAndNumberName = verseStringForDialog,
-                        onConfirmDelete = {
-                            if (indexOfVerseAndNumberSelectedForDeletion >= 0) {
-                                addVerseViewModel.onDeleteVerseNumberAndText(
-                                    indexOfVerseAndNumberSelectedForDeletion
-                                )
-                            }
-                            indexOfVerseAndNumberSelectedForDeletion = -1
-                            showConfirmDeletionDialog = false
-                        },
-                        onDismissRequest = {
-                            indexOfVerseAndNumberSelectedForDeletion = -1
-                            showConfirmDeletionDialog = false
+                ConfirmDeletionDialog(
+                    verseAndNumberName = verseStringForDialog,
+                    onConfirmDelete = {
+                        if (indexOfVerseAndNumberSelectedForDeletion >= 0) {
+                            addVerseViewModel.onDeleteVerseNumberAndText(
+                                indexOfVerseAndNumberSelectedForDeletion
+                            )
                         }
-                    )
-                } else {
-                    indexOfVerseAndNumberSelectedForDeletion = -1
-                    showConfirmDeletionDialog = false
-                }
+                        indexOfVerseAndNumberSelectedForDeletion = -1
+                        showConfirmDeletionDialog = false
+                    },
+                    onDismissRequest = {
+                        indexOfVerseAndNumberSelectedForDeletion = -1
+                        showConfirmDeletionDialog = false
+                    }
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopBar(
+    onBackPress: () -> Unit,
+    onSave: () -> Unit,
+) {
+    TopAppBar(
+        title = { Text(text = stringResource(R.string.add_verse_text)) },
+        navigationIcon = { BackButton(onBackPress = onBackPress) },
+        actions = {
+            IconButton(onClick = onSave) {
+                Icon(
+                    painter = painterResource(R.drawable.outline_save_24),
+                    contentDescription = stringResource(R.string.content_description_save)
+                )
+            }
+        }
+    )
+}
+
 @Composable
 fun ConfirmDeletionDialog(
-    verseAndNumberName: String,
+    verseAndNumberName: String?,
     onConfirmDelete: () -> Unit,
     onDismissRequest: () -> Unit,
 ) {
@@ -205,18 +213,25 @@ fun ConfirmDeletionDialog(
         onDismissRequest = onDismissRequest,
         title = {
             Text(
-                text = stringResource(
-                    R.string.dialog_title_delete_verse_number_and_text,
-                    verseAndNumberName
-                )
+                text = if (verseAndNumberName != null) {
+                    stringResource(
+                        id = R.string.dialog_title_delete_verse_number_and_text, verseAndNumberName
+                    )
+                } else {
+                    stringResource(id = R.string.delete)
+                }
             )
         },
         text = {
             Text(
-                text = stringResource(
-                    R.string.dialog_text_delete_verse_number_and_text,
-                    verseAndNumberName
-                )
+                text = if (verseAndNumberName != null) {
+                    stringResource(
+                        id = R.string.dialog_text_delete_verse_number_and_text,
+                        verseAndNumberName
+                    )
+                } else {
+                    stringResource(id = R.string.dialog_text_delete_verse_number_and_text_generic)
+                }
             )
         },
         confirmButton = {
@@ -244,6 +259,7 @@ private fun Content(
     onVerseNumberChanged: (Int, String) -> Unit,
     onVerseTextChanged: (Int, String) -> Unit,
     onDeleteVerseNumberAndText: (Int) -> Unit,
+    onAddVerse: () -> Unit,
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
     tags: List<String>,
@@ -264,6 +280,7 @@ private fun Content(
             onDeleteVerseNumberAndText = onDeleteVerseNumberAndText,
             indexBeingEdited = indexBeingEdited,
             onSelectForEdit = onSelectForEdit,
+            onAddVerse = onAddVerse,
             onAddTag = onAddTag,
             onRemoveTag = onRemoveTag,
             tags = tags,
@@ -272,44 +289,6 @@ private fun Content(
     }
 }
 
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun AddVerseBottomBar(
-    onAdd: () -> Unit,
-    onDelete: () -> Unit,
-    onSave: () -> Unit,
-    onShowTag: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    HorizontalFloatingToolbar(
-        expanded = true,
-        floatingActionButton = {
-            FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = onAdd) {
-                Icon(
-                    painter = painterResource(R.drawable.outline_add_24),
-                    contentDescription = null
-                )
-            }
-        },
-        floatingActionButtonPosition = FloatingToolbarHorizontalFabPosition.End,
-        colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
-        modifier = modifier
-    ) {
-        IconButton(onClick = onDelete) {
-            Icon(painter = painterResource(R.drawable.outline_delete_24), contentDescription = null)
-        }
-        IconButton(onClick = onShowTag) {
-            Icon(
-                painter = painterResource(R.drawable.outline_add_tag_24),
-                contentDescription = null
-            )
-        }
-        IconButton(onClick = onSave) {
-            Icon(painter = painterResource(R.drawable.outline_save_24), contentDescription = null)
-        }
-    }
-}
 
 @Composable
 private fun VerseForm(
@@ -321,6 +300,7 @@ private fun VerseForm(
     onVerseNumberChanged: (index: Int, String) -> Unit,
     onVerseTextChanged: (index: Int, String) -> Unit,
     onDeleteVerseNumberAndText: (index: Int) -> Unit,
+    onAddVerse: () -> Unit,
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
     indexBeingEdited: Int,
@@ -329,76 +309,73 @@ private fun VerseForm(
     allTags: List<String>,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .imePadding()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        item {
-            BookAndChapter(book, onBookChanged, chapter, onChapterChanged)
+        BookAndChapter(book, onBookChanged, chapter, onChapterChanged)
+
+        Spacer(
+            modifier = Modifier.height(16.dp)
+        )
+
+        verseNumberAndTextList.forEachIndexed { index, verseNumberAndText ->
+            when (indexBeingEdited) {
+                index -> {
+                    EditableVerseNumberAndText(
+                        index = index,
+                        verseNumberAndText = verseNumberAndText,
+                        onVerseNumberChanged = onVerseNumberChanged,
+                        onVerseTextChanged = onVerseTextChanged,
+                        onDeleteVerseNumberAndText = onDeleteVerseNumberAndText,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                else -> {
+                    NoEditVerseNumberAndText(
+                        index = index,
+                        verseNumberAndText = verseNumberAndText,
+                        onSelectForEdit = onSelectForEdit,
+                        onDeleteVerseNumberAndText = { onDeleteVerseNumberAndText(index) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
 
-        item {
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-        }
-
-        itemsIndexed(
-            items = verseNumberAndTextList,
-            key = { index, verseNumberAndText -> verseNumberAndText.verseNumber }
-        ) { index, verseNumberAndText ->
-
-            AnimatedHeightCrossfade(
-                targetState = indexBeingEdited,
-                animationSpec = tween(durationMillis = 100)
-            ) { targetState ->
-                Box(
-                    modifier = Modifier
-                ) {
-                    when (targetState) {
-                        index -> {
-                            EditableVerseNumberAndText(
-                                index = index,
-                                verseNumberAndText = verseNumberAndText,
-                                onVerseNumberChanged = onVerseNumberChanged,
-                                onVerseTextChanged = onVerseTextChanged,
-                                onDeleteVerseNumberAndText = onDeleteVerseNumberAndText,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        else -> {
-                            NoEditVerseNumberAndText(
-                                index = index,
-                                verseNumberAndText = verseNumberAndText,
-                                onSelectForEdit = onSelectForEdit,
-                                onDeleteVerseNumberAndText = { onDeleteVerseNumberAndText(index) },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+        if (verseNumberAndTextList.all { it.verseNumber.isNotEmpty() && it.verseText.isNotEmpty() }) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(onClick = onAddVerse) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = stringResource(R.string.add_verse_text))
+                        Icon(
+                            painter = painterResource(R.drawable.icon_plus),
+                            contentDescription = stringResource(R.string.content_description_add_verse)
+                        )
                     }
                 }
             }
         }
 
-        item {
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-        }
+        Spacer(
+            modifier = Modifier.height(16.dp)
+        )
 
-        item {
-            Tags(
-                modifier = Modifier.fillMaxWidth(),
-                tags = tags,
-                allTags = allTags,
-                onAddTag = onAddTag,
-                onRemoveTag = onRemoveTag,
-            )
-        }
+        Tags(
+            modifier = Modifier.fillMaxWidth(),
+            tags = tags,
+            allTags = allTags,
+            onAddTag = onAddTag,
+            onRemoveTag = onRemoveTag,
+        )
     }
 }
 
@@ -419,7 +396,7 @@ private fun EditableVerseNumberAndText(
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(16.dp),
@@ -474,7 +451,7 @@ fun NoEditVerseNumberAndText(
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(16.dp)
@@ -509,6 +486,21 @@ fun AnnotatedVerse(
     )
 }
 
+@Preview
+@Composable
+private fun ScreenPreview() {
+    AddVerseScreen(onBackPress = {})
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun TopBarPreview() {
+    TopBar(
+        onBackPress = {},
+        onSave = {}
+    )
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun ContentPreview() {
@@ -528,6 +520,7 @@ private fun ContentPreview() {
         onDeleteVerseNumberAndText = {},
         indexBeingEdited = 0,
         onSelectForEdit = { index -> },
+        onAddVerse = {},
         onAddTag = {},
         onRemoveTag = {},
         tags = listOf(),

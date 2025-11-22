@@ -30,11 +30,11 @@ class AddVerseViewModel : ViewModel() {
         viewModelScope.launch {
             getAllTagsUseCase.getAllTags()
                 .onSuccess { tags ->
-                   _uiState.update {
-                       it.copy(
-                           allTags = tags
-                       )
-                   }
+                    _uiState.update {
+                        it.copy(
+                            allTags = tags
+                        )
+                    }
                 }
         }
     }
@@ -89,7 +89,7 @@ class AddVerseViewModel : ViewModel() {
         }
     }
 
-    fun addVerse() {
+    fun saveVerse() {
         viewModelScope.launch {
             when (uiState.value.verseBeingEdited) {
                 null -> {
@@ -145,7 +145,9 @@ class AddVerseViewModel : ViewModel() {
         val newVerseNumberAndText = _uiState.value.verseNumberAndTextList[index].copy(
             verseNumber = verseNumber
         )
+
         val newList = _uiState.value.verseNumberAndTextList.toMutableList()
+
         newList[index] = newVerseNumberAndText
         _uiState.update {
             it.copy(verseNumberAndTextList = newList.toList())
@@ -209,8 +211,8 @@ class AddVerseViewModel : ViewModel() {
         }
     }
 
-    fun getSnapshotOfVerse(): Verse? {
-        val snapshotVerse = buildVerse().getOrNull()
+    fun getSnapshotOfVerse(index: Int): Verse? {
+        val snapshotVerse = buildVerseForIndex(givenIndex = index).getOrNull()
 
         return snapshotVerse
     }
@@ -242,7 +244,7 @@ class AddVerseViewModel : ViewModel() {
         val bookErrorFound = uiState.value.book.isEmpty()
 
         if (chapterErrorFound || foundErrorInVerseNumbers || foundErrorInVerseText || bookErrorFound)
-            return Result.failure(Throwable("Failed to convert chapter or verse number to int. Check your inputs."))
+            return Result.failure(Throwable("Failed to generate verse. Found errors [\nchapter error: $chapterErrorFound\nverse number error: $foundErrorInVerseNumbers\nverse text error: $foundErrorInVerseText\nbook error: $bookErrorFound\n]\nCheck your inputs."))
 
         return Result.success(
             Verse(
@@ -253,6 +255,38 @@ class AddVerseViewModel : ViewModel() {
                 uuid = uiState.value.verseBeingEdited?.uuid ?: UUID.randomUUID()
             )
         )
+    }
+
+    private fun buildVerseForIndex(givenIndex: Int): Result<Verse> {
+        val indexInBounds =
+            givenIndex >= 0 && givenIndex < uiState.value.verseNumberAndTextList.size
+        return if (indexInBounds) {
+            val chapterErrorFound = uiState.value.chapter.toIntOrNull() == null
+            val foundErrorInVerseNumbers = uiState
+                .value
+                .verseNumberAndTextList[givenIndex].verseNumber.toIntOrNull() == null
+            val foundErrorInVerseText = uiState
+                .value
+                .verseNumberAndTextList[givenIndex].verseText.isEmpty()
+            val bookErrorFound = uiState.value.book.isEmpty()
+
+            if (chapterErrorFound || foundErrorInVerseNumbers || foundErrorInVerseText || bookErrorFound)
+                return Result.failure(Throwable("Failed to generate verse. Found errors [\nchapter error: $chapterErrorFound\nverse number error: $foundErrorInVerseNumbers\nverse text error: $foundErrorInVerseText\nbook error: $bookErrorFound\n]\nCheck your inputs."))
+
+            return Result.success(
+                Verse(
+                    book = uiState.value.book,
+                    chapter = uiState.value.chapter.toInt(),
+                    verseText = uiState.value.verseNumberAndTextList
+                        .filterIndexed { index, text -> index == givenIndex }
+                        .map { it.transform() },
+                    tags = uiState.value.tags,
+                    uuid = uiState.value.verseBeingEdited?.uuid ?: UUID.randomUUID()
+                )
+            )
+        } else {
+            Result.failure(Throwable("Index($givenIndex) is not within the bounds of the current verses."))
+        }
     }
 
     fun resetEncounteredSaveError() {
@@ -269,7 +303,7 @@ class AddVerseViewModel : ViewModel() {
 
     data class AddVerseNumberAndText(
         var verseNumber: String = "",
-        var verseText: String = ""
+        var verseText: String = "",
     ) {
         fun transform(): VerseNumberAndText {
             return VerseNumberAndText(verseNumber.toIntOrNull() ?: 0, verseText)

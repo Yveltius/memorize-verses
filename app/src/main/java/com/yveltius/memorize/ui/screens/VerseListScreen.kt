@@ -44,14 +44,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yveltius.memorize.R
-import com.yveltius.memorize.ui.components.AppScaffold
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
 import com.yveltius.memorize.viewmodels.VersesListViewModel
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
-import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -59,7 +58,7 @@ fun VerseListScreen(
     onAddVerse: () -> Unit,
     onEditVerse: (Verse) -> Unit,
     onGoToChooseNextWord: (Verse) -> Unit,
-    versesListViewModel: VersesListViewModel = koinViewModel()
+    versesListViewModel: VersesListViewModel = viewModel()
 ) {
     val uiState by versesListViewModel.uiState.collectAsState()
 
