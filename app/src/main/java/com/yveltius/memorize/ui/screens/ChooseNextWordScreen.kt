@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.compose.errorDark
 import com.example.compose.errorLight
 import com.example.compose.onSurfaceDark
@@ -44,7 +45,7 @@ import org.koin.androidx.compose.koinViewModel
 fun ChooseNextWordScreen(
     onBackPress: () -> Unit,
     verseUUIDString: String,
-    chooseNextWordViewModel: ChooseNextWordViewModel = koinViewModel()
+    chooseNextWordViewModel: ChooseNextWordViewModel = viewModel()
 ) {
     LaunchedEffect(Unit) {
         chooseNextWordViewModel.getVerse(verseUUIDString = verseUUIDString)

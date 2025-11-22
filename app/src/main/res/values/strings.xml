@@ -33,4 +33,10 @@
 
     <string name="dialog_title_delete_verse_number_and_text">Delete %1$s</string>
     <string name="dialog_text_delete_verse_number_and_text">Are you sure you want to delete %1$s?</string>
+    <string name="dialog_text_delete_verse_number_and_text_generic">Are you sure?</string>
+    
+    <!-- Content Descriptions -->
+    <string name="content_description_back_arrow">Back</string>
+    <string name="content_description_save">Save</string>
+    <string name="content_description_add_verse">Add Verse</string>
 </resources>
