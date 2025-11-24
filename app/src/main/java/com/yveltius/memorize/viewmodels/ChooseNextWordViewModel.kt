@@ -43,8 +43,8 @@ class ChooseNextWordViewModel: ViewModel() {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            words = words,
-                            currentWords = currentWords,
+                            allWordsStates = words,
+                            currentWordsStates = currentWords,
                             availableGuesses = availableGuesses,
                             verse = verse,
                         )
@@ -57,9 +57,9 @@ class ChooseNextWordViewModel: ViewModel() {
 
     fun onGuess(word: String) {
         viewModelScope.launch {
-            val nextWord = uiState.value.currentWords.first { it.isGuessable && !it.isGuessed }
-            val nextWordIndex = uiState.value.currentWords.indexOf(nextWord)
-            val currentWordsIndex = uiState.value.words.indexOf(uiState.value.currentWords)
+            val nextWord = uiState.value.currentWordsStates.first { it.isGuessable && !it.isGuessed }
+            val nextWordIndex = uiState.value.currentWordsStates.indexOf(nextWord)
+            val currentWordsIndex = uiState.value.allWordsStates.indexOf(uiState.value.currentWordsStates)
             val currentGuessCount = uiState.value.currentGuessCount + 1
 
             if (word == nextWord.string) {
@@ -79,7 +79,7 @@ class ChooseNextWordViewModel: ViewModel() {
     }
 
     private fun updateCurrentWordsForCorrectGuess(currentWordsListIndex: Int, wordBeingUpdateIndex: Int) {
-        val newCurrentWords = uiState.value.currentWords.mapIndexed { index, state ->
+        val newCurrentWords = uiState.value.currentWordsStates.mapIndexed { index, state ->
             if (index == wordBeingUpdateIndex) {
                 state.copy(
                     isGuessed = true
@@ -89,7 +89,8 @@ class ChooseNextWordViewModel: ViewModel() {
             }
         }
 
-        val newWords = uiState.value.words.mapIndexed { index, states ->
+        // updates the current words index with newCurrentWords
+        val newWords = uiState.value.allWordsStates.mapIndexed { index, states ->
             if (index == currentWordsListIndex) {
                 newCurrentWords
             } else {
@@ -103,7 +104,7 @@ class ChooseNextWordViewModel: ViewModel() {
             .take(8)
             .shuffled()
 
-        val currentGuessIndex = if ((wordBeingUpdateIndex + 1) >= uiState.value.words[currentWordsListIndex].size) {
+        val currentGuessIndex = if ((wordBeingUpdateIndex + 1) >= uiState.value.allWordsStates[currentWordsListIndex].size) {
             -1
         } else {
             wordBeingUpdateIndex + 1
@@ -112,15 +113,15 @@ class ChooseNextWordViewModel: ViewModel() {
         val currentGuessCount = uiState.value.currentGuessCount + 1
 
         val showNextButton = newCurrentWords.all { it.isGuessed || !it.isGuessable }
-                && (currentWordsListIndex < uiState.value.words.size - 1)
+                && (currentWordsListIndex < uiState.value.allWordsStates.size - 1)
 
         val showFinishButton = newCurrentWords.all { it.isGuessed || !it.isGuessable }
-                && currentWordsListIndex >= (uiState.value.words.size - 1)
+                && currentWordsListIndex >= (uiState.value.allWordsStates.size - 1)
 
         _uiState.update {
             it.copy(
-                words = newWords,
-                currentWords = newCurrentWords,
+                allWordsStates = newWords,
+                currentWordsStates = newCurrentWords,
                 currentGuessCount = currentGuessCount,
                 availableGuesses = newAvailableGuesses,
                 currentGuessIndex = currentGuessIndex,
@@ -133,15 +134,15 @@ class ChooseNextWordViewModel: ViewModel() {
 
     fun goNext() {
         val nextWords = uiState.value.let {
-            it.words[it.words.indexOf(it.currentWords) + 1]
+            it.allWordsStates[it.allWordsStates.indexOf(it.currentWordsStates) + 1]
         }
 
         val availableGuesses = nextWords.getAvailableGuesses()
 
         _uiState.update {
             it.copy(
-                words = it.words,
-                currentWords = nextWords,
+                allWordsStates = it.allWordsStates,
+                currentWordsStates = nextWords,
                 availableGuesses = availableGuesses,
                 guessCounts = it.guessCounts + it.currentGuessCount,
                 currentGuessCount = 0,
@@ -165,9 +166,9 @@ class ChooseNextWordViewModel: ViewModel() {
 
     data class UiState(
         val isLoading: Boolean = false,
-        val words: List<List<WordGuessState>> = listOf(),
+        val allWordsStates: List<List<WordGuessState>> = listOf(),
         val guessCounts: List<Int> = listOf(),
-        val currentWords: List<WordGuessState> = listOf(),
+        val currentWordsStates: List<WordGuessState> = listOf(),
         val currentGuessCount: Int = 0,
         val availableGuesses: List<WordGuessState> = listOf(),
         val currentGuessIndex: Int = 0,
@@ -175,7 +176,16 @@ class ChooseNextWordViewModel: ViewModel() {
         val lastGuessIncorrect: Boolean = false,
         val showNextButton: Boolean = false,
         val showFinishButton: Boolean = false
-    )
+    ) {
+        val currentVerse: String?
+            get() {
+                return this.verse?.getVerseString(
+                    index = this.allWordsStates.indexOf(
+                        this.currentWordsStates
+                    )
+                )
+            }
+    }
 
     data class WordGuessState(
         val string: String,

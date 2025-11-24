@@ -1,23 +1,30 @@
 package com.yveltius.memorize.ui.screens
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.currentComposer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -25,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,7 +47,6 @@ import com.yveltius.memorize.R
 import com.yveltius.memorize.ui.components.AppTopBar
 import com.yveltius.memorize.ui.theme.AppTheme
 import com.yveltius.memorize.viewmodels.ChooseNextWordViewModel
-import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun ChooseNextWordScreen(
@@ -63,89 +70,55 @@ fun ChooseNextWordScreen(
             },
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+                    .verticalScroll(rememberScrollState())
             ) {
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = uiState.verse?.getVerseString(
-                                index = uiState.words.indexOf(
-                                    uiState.currentWords
-                                )
-                            )
-                                ?: stringResource(R.string.encountered_error_for_verse_string),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                CorrectGuessIndicator(
+                    currentGuessCount = uiState.currentGuessCount,
+                    currentWords = uiState.currentWordsStates,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                        WordBlanks(
-                            currentWordsAndPunctuation = uiState.currentWords,
-                            currentGuessIndex = uiState.currentGuessIndex,
-                            lastGuessIncorrect = uiState.lastGuessIncorrect,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
+                WordBlanksArea(
+                    currentVerse = uiState.currentVerse ?: stringResource(R.string.encountered_error_for_verse_string),
+                    currentWords = uiState.currentWordsStates,
+                    currentGuessIndex = uiState.currentGuessIndex,
+                    lastGuessIncorrect = uiState.lastGuessIncorrect,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
 
-                item {
-                    Text(text = uiState.currentWords.count { it.isGuessed }
-                        .toString() + "/" + uiState.currentGuessCount.toString())
-                }
+                Spacer(modifier = Modifier.weight(1f))
 
-                item {
-                    AvailableGuesses(
-                        availableGuesses = uiState.availableGuesses,
-                        onGuess = chooseNextWordViewModel::onGuess,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                AvailableGuesses(
+                    availableGuesses = uiState.availableGuesses,
+                    onGuess = chooseNextWordViewModel::onGuess,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
 
                 if (uiState.showNextButton) {
-                    item {
-                        Box(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            FilledTonalIconButton(
-                                onClick = chooseNextWordViewModel::goNext,
-                                modifier = Modifier.size(48.dp)
-                                    .align(alignment = Alignment.CenterEnd)
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.outline_arrow_back_24),
-                                    contentDescription = null,
-                                    modifier = Modifier.rotate(180.0f)
-                                )
-                            }
-                        }
-                    }
+                    GoNextButton(
+                        onGoNext = chooseNextWordViewModel::goNext,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
                 } else if (uiState.showFinishButton) {
-                    item {
-                        Box(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            FilledTonalIconButton(
-                                onClick = {
-                                    chooseNextWordViewModel.onComplete()
-                                    onBackPress()
-                                },
-                                modifier = Modifier.size(48.dp)
-                                    .align(alignment = Alignment.CenterEnd)
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.outline_check_24),
-                                    contentDescription = null
-                                )
-                            }
-                        }
-                    }
+                    CompleteButton(
+                        onComplete = {
+                            chooseNextWordViewModel.onComplete()
+                            onBackPress()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
                 }
             }
         }
@@ -162,7 +135,7 @@ fun WordBlanks(
     val isSystemInDarkTheme = isSystemInDarkTheme()
     val underlineColor = if (isSystemInDarkTheme) onSurfaceDark else onSurfaceLight
     val errorUnderlineColor = if (isSystemInDarkTheme) errorDark else errorLight
-    val textSize = remember { 24.sp }
+    val textSize = remember { 16.sp }
     FlowRow(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -237,4 +210,103 @@ fun String.toEmptySpaces(): String {
         stringBuilder.append("  ")
     }
     return stringBuilder.toString()
+}
+
+@Composable
+fun CorrectGuessIndicator(
+    currentGuessCount: Int,
+    currentWords: List<ChooseNextWordViewModel.WordGuessState>,
+    modifier: Modifier = Modifier
+) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = if (currentGuessCount > 0) {
+            currentWords.count { it.isGuessed }.toFloat()
+                .div(currentGuessCount.toFloat())
+        } else {
+            1f
+        },
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    LinearProgressIndicator(
+        progress = {
+            animatedProgress
+        },
+        trackColor = MaterialTheme.colorScheme.error,
+        strokeCap = StrokeCap.Square,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun WordBlanksArea(
+    currentVerse: String,
+    currentWords: List<ChooseNextWordViewModel.WordGuessState>,
+    currentGuessIndex: Int,
+    lastGuessIncorrect: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = currentVerse,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+        )
+
+        WordBlanks(
+            currentWordsAndPunctuation = currentWords,
+            currentGuessIndex = currentGuessIndex,
+            lastGuessIncorrect = lastGuessIncorrect,
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun GoNextButton(
+    onGoNext: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+    ) {
+        FilledTonalIconButton(
+            onClick = onGoNext,
+            modifier = Modifier
+                .size(48.dp)
+                .align(alignment = Alignment.CenterEnd)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.outline_arrow_back_24),
+                contentDescription = null,
+                modifier = Modifier.rotate(180.0f)
+            )
+        }
+    }
+}
+
+@Composable
+fun CompleteButton(
+    onComplete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+    ) {
+        FilledTonalIconButton(
+            onClick = onComplete,
+            modifier = Modifier
+                .size(48.dp)
+                .align(alignment = Alignment.CenterEnd)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.outline_check_24),
+                contentDescription = null
+            )
+        }
+    }
 }
