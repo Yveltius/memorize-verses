@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -78,6 +79,7 @@ fun AddVerseScreen(
         addVerseViewModel.getAllTags()
     }
 
+    val editActionLabelText: String = stringResource(R.string.edit)
     LaunchedEffect(uiState.recentlySavedVerse) {
         delay(500) // wait for the FAB menu to close, not sure how else to handle it.
         uiState.recentlySavedVerse?.let { recentlySavedVerse ->
@@ -86,9 +88,19 @@ fun AddVerseScreen(
                 recentlySavedVerse.getVerseString()
             )
 
-            snackbarHostState.showSnackbar(
-                message = snackbarString
+            val result = snackbarHostState.showSnackbar(
+                message = snackbarString,
+                actionLabel = editActionLabelText
             )
+
+            when (result) {
+                SnackbarResult.Dismissed -> {}
+                SnackbarResult.ActionPerformed -> {
+                    uiState.recentlySavedVerse?.let {
+                        addVerseViewModel.getVerseBeingEdited(uuid = it.uuid)
+                    }
+                }
+            }
         }
     }
 
@@ -115,14 +127,6 @@ fun AddVerseScreen(
 
     AppTheme {
         Scaffold(
-//            floatingActionButton = {
-//                AddVerseBottomBar(
-//                    onAdd = addVerseViewModel::onAddVerseNumberAndText,
-//                    onDelete = addVerseViewModel::onDeleteLastVerseNumberAndText,
-//                    onSave = addVerseViewModel::saveVerse,
-//                    onShowTag = { },
-//                )
-//            },
             snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState)
             },
