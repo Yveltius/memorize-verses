@@ -81,7 +81,6 @@ fun AddVerseScreen(
 
     val editActionLabelText: String = stringResource(R.string.edit)
     LaunchedEffect(uiState.recentlySavedVerse) {
-        delay(500) // wait for the FAB menu to close, not sure how else to handle it.
         uiState.recentlySavedVerse?.let { recentlySavedVerse ->
             val snackbarString = context.getString(
                 R.string.snackbar_saved_verse,
@@ -90,7 +89,8 @@ fun AddVerseScreen(
 
             val result = snackbarHostState.showSnackbar(
                 message = snackbarString,
-                actionLabel = editActionLabelText
+                actionLabel = editActionLabelText,
+                withDismissAction = true
             )
 
             when (result) {
@@ -271,7 +271,7 @@ private fun Content(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize().padding(16.dp)
     ) {
         VerseForm(
             book = book,
@@ -317,7 +317,6 @@ private fun VerseForm(
         modifier = modifier
             .fillMaxWidth()
             .imePadding()
-            .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
