@@ -26,6 +26,10 @@ class AddVerseViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState
 
+    init {
+        getAllTags()
+    }
+
     fun getAllTags() {
         viewModelScope.launch {
             getAllTagsUseCase.getAllTags()

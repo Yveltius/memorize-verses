@@ -75,10 +75,6 @@ fun AddVerseScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        addVerseViewModel.getAllTags()
-    }
-
     val editActionLabelText: String = stringResource(R.string.edit)
     LaunchedEffect(uiState.recentlySavedVerse) {
         uiState.recentlySavedVerse?.let { recentlySavedVerse ->
