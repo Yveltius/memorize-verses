@@ -80,19 +80,3 @@ private data class EditVerse(
 private data class ChooseNextWord(
     val verseUUIDString: String
 )
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    AppTheme {
-        Greeting("Android")
-    }
-}
