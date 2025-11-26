@@ -170,9 +170,19 @@ class AddVerseViewModel : ViewModel() {
     }
 
     fun onAddVerseNumberAndText() {
-        _uiState.update {
-            it.copy(verseNumberAndTextList = it.verseNumberAndTextList + AddVerseNumberAndText())
+        val newAddVerseAndNumberText = if (_uiState.value.verseNumberAndTextList.isNotEmpty() && _uiState.value.verseNumberAndTextList.last().verseNumber.toIntOrNull() != null) {
+            AddVerseNumberAndText(verseNumber = (_uiState.value.verseNumberAndTextList.last().verseNumber.toInt() + 1).toString())
+        } else {
+            AddVerseNumberAndText()
         }
+
+        _uiState.update {
+            it.copy(
+                verseNumberAndTextList = it.verseNumberAndTextList + newAddVerseAndNumberText
+            )
+        }
+
+        onSelectForEdit(index = _uiState.value.verseNumberAndTextList.size - 1)
     }
 
     fun onDeleteVerseNumberAndText(index: Int) {
@@ -181,16 +191,6 @@ class AddVerseViewModel : ViewModel() {
                 verseNumberAndTextList = it
                     .verseNumberAndTextList
                     .filterIndexed { filterIndex, _ -> filterIndex != index }
-            )
-        }
-    }
-
-    fun onDeleteLastVerseNumberAndText() {
-        _uiState.update {
-            it.copy(
-                verseNumberAndTextList = it
-                    .verseNumberAndTextList
-                    .dropLast(1)
             )
         }
     }

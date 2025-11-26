@@ -23,7 +23,7 @@ fun EditableVerseText(
         onValueChange = { onVerseTextChanged(index, it) },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Text,
-            imeAction = ImeAction.Next
+            imeAction = ImeAction.Done
         ),
         label = {
             Text(text = stringResource(R.string.verse_text))
