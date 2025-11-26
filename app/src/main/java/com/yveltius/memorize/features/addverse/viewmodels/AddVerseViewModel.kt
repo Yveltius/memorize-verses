@@ -1,5 +1,6 @@
 package com.yveltius.memorize.features.addverse.viewmodels
 
+import androidx.compose.runtime.currentRecomposeScope
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yveltius.versememorization.domain.verses.AddVersesUseCase
@@ -77,6 +78,7 @@ class AddVerseViewModel : ViewModel() {
                     .onSuccess {
                         _uiState.update {
                             it.copy(
+                                verseBeingEdited = verse,
                                 isSaving = false,
                                 recentlySavedVerse = verse,
                                 encounteredSaveError = false
@@ -171,11 +173,12 @@ class AddVerseViewModel : ViewModel() {
 
     fun onAddVerseNumberAndText() {
         // if adding a second, third, etc verse, create it with the verseNumber already populated
-        val newAddVerseAndNumberText = if (_uiState.value.verseNumberAndTextList.isNotEmpty() && _uiState.value.verseNumberAndTextList.last().verseNumber.toIntOrNull() != null) {
-            AddVerseNumberAndText(verseNumber = (_uiState.value.verseNumberAndTextList.last().verseNumber.toInt() + 1).toString())
-        } else {
-            AddVerseNumberAndText()
-        }
+        val newAddVerseAndNumberText =
+            if (_uiState.value.verseNumberAndTextList.isNotEmpty() && _uiState.value.verseNumberAndTextList.last().verseNumber.toIntOrNull() != null) {
+                AddVerseNumberAndText(verseNumber = (_uiState.value.verseNumberAndTextList.last().verseNumber.toInt() + 1).toString())
+            } else {
+                AddVerseNumberAndText()
+            }
 
         _uiState.update {
             it.copy(
@@ -222,6 +225,24 @@ class AddVerseViewModel : ViewModel() {
         val snapshotVerse = buildVerseForIndex(givenIndex = index).getOrNull()
 
         return snapshotVerse
+    }
+
+    fun hasUnsavedChanges(): Boolean {
+        return uiState.value.let { currentState ->
+            if (currentState.verseBeingEdited != null) {
+                // we are editing an existing verse
+                currentState.verseBeingEdited.book != currentState.book
+                        || currentState.verseBeingEdited.chapter != currentState.chapter.toIntOrNull()
+                        || !currentState.verseBeingEdited.tags.containsAll(currentState.tags) || currentState.verseBeingEdited.tags.size != currentState.tags.size
+                        || !verseListsMatch(verseList = currentState.verseBeingEdited.verseText, addVerseList = currentState.verseNumberAndTextList)
+            } else {
+                // we are adding a new verse
+                currentState.book.isNotEmpty()
+                        || currentState.chapter.toIntOrNull() != null
+                        || currentState.tags.isNotEmpty()
+                        || currentState.verseNumberAndTextList.any { it.verseNumber.isNotEmpty() || it.verseText.isNotEmpty() }
+            }
+        }
     }
 
     data class UiState(
@@ -324,5 +345,22 @@ class AddVerseViewModel : ViewModel() {
                 verseText = text
             )
         }
+    }
+
+    private fun verseListsMatch(verseList: List<VerseNumberAndText>, addVerseList: List<AddVerseNumberAndText>): Boolean {
+        verseList.forEachIndexed { index, verse ->
+            val versesMatch = versesMatch(
+                verse = verse,
+                addVerse = addVerseList[index]
+            )
+
+            if (!versesMatch) return@verseListsMatch false
+        }
+        return verseList.size == addVerseList.size
+    }
+
+    private fun versesMatch(verse: VerseNumberAndText, addVerse: AddVerseNumberAndText): Boolean {
+        return verse.verseNumber == addVerse.verseNumber.toIntOrNull()
+                && verse.text == addVerse.verseText
     }
 }
