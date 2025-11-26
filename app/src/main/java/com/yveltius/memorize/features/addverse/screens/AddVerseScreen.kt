@@ -1,5 +1,6 @@
 package com.yveltius.memorize.features.addverse.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -68,7 +69,12 @@ fun AddVerseScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     var showConfirmDeletionDialog by remember { mutableStateOf(value = false) }
+    var showConfirmExitWithoutSavingDialog by remember { mutableStateOf(value = false) }
     var indexOfVerseAndNumberSelectedForDeletion by remember { mutableIntStateOf(value = -1) }
+
+    BackHandler(enabled = addVerseViewModel.hasUnsavedChanges()) {
+        showConfirmExitWithoutSavingDialog = true
+    }
 
     LaunchedEffect(Unit) {
         verseUUID?.let {
@@ -103,7 +109,6 @@ fun AddVerseScreen(
     }
 
     LaunchedEffect(uiState.encounteredSaveError) {
-        delay(500) // wait for the FAB menu to close, not sure how else to handle it.
         if (uiState.encounteredSaveError) {
             val snackbarString = context.getString(R.string.input_error)
 
@@ -130,7 +135,13 @@ fun AddVerseScreen(
             },
             topBar = {
                 TopBar(
-                    onBackPress = onBackPress,
+                    onBackPress = {
+                        if (addVerseViewModel.hasUnsavedChanges()) {
+                            showConfirmExitWithoutSavingDialog = true
+                        } else {
+                            onBackPress()
+                        }
+                    },
                     onSave = addVerseViewModel::saveVerse
                 )
             }
@@ -159,27 +170,41 @@ fun AddVerseScreen(
                     .fillMaxSize()
             )
 
-            if (showConfirmDeletionDialog) {
-                val verseStringForDialog = addVerseViewModel
-                    .getSnapshotOfVerse(index = indexOfVerseAndNumberSelectedForDeletion)
-                    ?.getVerseString()
+            when {
+                showConfirmDeletionDialog -> {
+                    val verseStringForDialog = addVerseViewModel
+                        .getSnapshotOfVerse(index = indexOfVerseAndNumberSelectedForDeletion)
+                        ?.getVerseString()
 
-                ConfirmDeletionDialog(
-                    verseAndNumberName = verseStringForDialog,
-                    onConfirmDelete = {
-                        if (indexOfVerseAndNumberSelectedForDeletion >= 0) {
-                            addVerseViewModel.onDeleteVerseNumberAndText(
-                                indexOfVerseAndNumberSelectedForDeletion
-                            )
+                    ConfirmDeletionDialog(
+                        verseAndNumberName = verseStringForDialog,
+                        onConfirmDelete = {
+                            if (indexOfVerseAndNumberSelectedForDeletion >= 0) {
+                                addVerseViewModel.onDeleteVerseNumberAndText(
+                                    indexOfVerseAndNumberSelectedForDeletion
+                                )
+                            }
+                            indexOfVerseAndNumberSelectedForDeletion = -1
+                            showConfirmDeletionDialog = false
+                        },
+                        onDismissRequest = {
+                            indexOfVerseAndNumberSelectedForDeletion = -1
+                            showConfirmDeletionDialog = false
                         }
-                        indexOfVerseAndNumberSelectedForDeletion = -1
-                        showConfirmDeletionDialog = false
-                    },
-                    onDismissRequest = {
-                        indexOfVerseAndNumberSelectedForDeletion = -1
-                        showConfirmDeletionDialog = false
-                    }
-                )
+                    )
+                }
+
+                showConfirmExitWithoutSavingDialog -> {
+                    ConfirmExitWithoutSavingDialog(
+                        onConfirmExitWithoutSaving = {
+                            showConfirmExitWithoutSavingDialog = false
+                            onBackPress()
+                        },
+                        onDismissRequest = {
+                            showConfirmExitWithoutSavingDialog = false
+                        }
+                    )
+                }
             }
         }
     }
@@ -250,6 +275,32 @@ fun ConfirmDeletionDialog(
 }
 
 @Composable
+private fun ConfirmExitWithoutSavingDialog(
+    onConfirmExitWithoutSaving: () -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(text = stringResource(R.string.dialog_confirm_exit_without_saving_title))
+        },
+        text = {
+            Text(text = stringResource(R.string.dialog_confirm_exit_without_saving_description))
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirmExitWithoutSaving) {
+                Text(text = stringResource(R.string.confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(text = stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
 private fun Content(
     book: String,
     chapter: String,
@@ -269,7 +320,9 @@ private fun Content(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxSize().padding(16.dp)
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
     ) {
         VerseForm(
             book = book,

@@ -34,6 +34,10 @@
     <string name="dialog_title_delete_verse_number_and_text">Delete %1$s</string>
     <string name="dialog_text_delete_verse_number_and_text">Are you sure you want to delete %1$s?</string>
     <string name="dialog_text_delete_verse_number_and_text_generic">Are you sure?</string>
+
+    <!-- Add Verse Screen -->
+    <string name="dialog_confirm_exit_without_saving_title">Exit without Saving</string>
+    <string name="dialog_confirm_exit_without_saving_description">Are you sure you want to exit without saving your changes? Any unsaved changes will be lost.</string>
     
     <!-- Content Descriptions -->
     <string name="content_description_back_arrow">Back</string>
