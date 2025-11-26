@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -86,7 +87,8 @@ fun AddVerseScreen(
             val result = snackbarHostState.showSnackbar(
                 message = snackbarString,
                 actionLabel = editActionLabelText,
-                withDismissAction = true
+                withDismissAction = true,
+                duration = SnackbarDuration.Short
             )
 
             when (result) {
