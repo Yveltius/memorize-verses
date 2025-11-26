@@ -196,9 +196,10 @@ class AddVerseViewModel : ViewModel() {
     }
 
     fun onAddTag(tag: String) {
-        if (!uiState.value.tags.any { it.equals(tag, ignoreCase = false) }) {
+        val tagToAdd = tag.trim()
+        if (!uiState.value.tags.any { it.equals(tagToAdd, ignoreCase = false) }) {
             _uiState.update {
-                it.copy(tags = it.tags + tag)
+                it.copy(tags = it.tags + tagToAdd)
             }
         }
     }
