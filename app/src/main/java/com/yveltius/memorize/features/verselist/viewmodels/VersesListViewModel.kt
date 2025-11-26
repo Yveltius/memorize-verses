@@ -1,4 +1,4 @@
-package com.yveltius.memorize.viewmodels
+package com.yveltius.memorize.features.verselist.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,12 +10,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent.inject
+import org.koin.java.KoinJavaComponent
 
 class VersesListViewModel : ViewModel() {
-    private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
-    private val addVersesUseCase: AddVersesUseCase by inject(AddVersesUseCase::class.java)
-    private val removeVersesUseCase: RemoveVersesUseCase by inject(RemoveVersesUseCase::class.java)
+    private val getVersesUseCase: GetVersesUseCase by KoinJavaComponent.inject(GetVersesUseCase::class.java)
+    private val addVersesUseCase: AddVersesUseCase by KoinJavaComponent.inject(AddVersesUseCase::class.java)
+    private val removeVersesUseCase: RemoveVersesUseCase by KoinJavaComponent.inject(
+        RemoveVersesUseCase::class.java
+    )
 
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState

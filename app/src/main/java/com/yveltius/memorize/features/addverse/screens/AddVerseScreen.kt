@@ -103,7 +103,6 @@ fun AddVerseScreen(
     }
 
     LaunchedEffect(uiState.encounteredSaveError) {
-        delay(500) // wait for the FAB menu to close, not sure how else to handle it.
         if (uiState.encounteredSaveError) {
             val snackbarString = context.getString(R.string.input_error)
 

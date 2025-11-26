@@ -1,4 +1,4 @@
-package com.yveltius.memorize.ui.screens
+package com.yveltius.memorize.features.verselist.screens
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
@@ -48,7 +48,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yveltius.memorize.R
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
-import com.yveltius.memorize.viewmodels.VersesListViewModel
+import com.yveltius.memorize.features.verselist.viewmodels.VersesListViewModel
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 

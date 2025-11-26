@@ -9,7 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.yveltius.memorize.features.addverse.screens.AddVerseScreen
 import com.yveltius.memorize.ui.screens.ChooseNextWordScreen
-import com.yveltius.memorize.ui.screens.VerseListScreen
+import com.yveltius.memorize.features.verselist.screens.VerseListScreen
 import kotlinx.serialization.Serializable
 import java.util.UUID
 

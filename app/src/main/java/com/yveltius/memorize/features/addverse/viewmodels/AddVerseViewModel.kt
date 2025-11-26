@@ -170,6 +170,7 @@ class AddVerseViewModel : ViewModel() {
     }
 
     fun onAddVerseNumberAndText() {
+        // if adding a second, third, etc verse, create it with the verseNumber already populated
         val newAddVerseAndNumberText = if (_uiState.value.verseNumberAndTextList.isNotEmpty() && _uiState.value.verseNumberAndTextList.last().verseNumber.toIntOrNull() != null) {
             AddVerseNumberAndText(verseNumber = (_uiState.value.verseNumberAndTextList.last().verseNumber.toInt() + 1).toString())
         } else {
@@ -182,6 +183,7 @@ class AddVerseViewModel : ViewModel() {
             )
         }
 
+        // after adding the new verse, make it the current verse being edited
         onSelectForEdit(index = _uiState.value.verseNumberAndTextList.size - 1)
     }
 

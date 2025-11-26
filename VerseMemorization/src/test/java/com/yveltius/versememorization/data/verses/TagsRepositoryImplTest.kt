@@ -100,10 +100,10 @@ class TagsRepositoryImplTest {
             tag == "Discipleship Verse"
         }
         val obedienceToChristCount = tags.count { tag ->
-            tag == "Discipleship Verse"
+            tag == "Obedience to Christ"
         }
         val separateFromTheWorldCount = tags.count { tag ->
-            tag == "Discipleship Verse"
+            tag == "Separate from the World"
         }
 
         val expected = 1

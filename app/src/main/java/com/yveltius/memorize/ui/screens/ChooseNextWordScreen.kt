@@ -15,16 +15,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.currentComposer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -44,10 +46,11 @@ import com.example.compose.errorLight
 import com.example.compose.onSurfaceDark
 import com.example.compose.onSurfaceLight
 import com.yveltius.memorize.R
-import com.yveltius.memorize.ui.components.AppTopBar
+import com.yveltius.memorize.ui.components.BackButton
 import com.yveltius.memorize.ui.theme.AppTheme
 import com.yveltius.memorize.viewmodels.ChooseNextWordViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChooseNextWordScreen(
     onBackPress: () -> Unit,
@@ -63,9 +66,9 @@ fun ChooseNextWordScreen(
     AppTheme {
         Scaffold(
             topBar = {
-                AppTopBar(
-                    onBackPress = onBackPress,
-                    topBarText = uiState.verse?.getVerseString()
+                TopBar(
+                    titleText = uiState.verse?.getVerseString(),
+                    onBackPress = onBackPress
                 )
             },
             modifier = Modifier.fillMaxSize()
@@ -83,7 +86,8 @@ fun ChooseNextWordScreen(
                 )
 
                 WordBlanksArea(
-                    currentVerse = uiState.currentVerse ?: stringResource(R.string.encountered_error_for_verse_string),
+                    currentVerse = uiState.currentVerse
+                        ?: stringResource(R.string.encountered_error_for_verse_string),
                     currentWords = uiState.currentWordsStates,
                     currentGuessIndex = uiState.currentGuessIndex,
                     lastGuessIncorrect = uiState.lastGuessIncorrect,
@@ -126,7 +130,25 @@ fun ChooseNextWordScreen(
 }
 
 @Composable
-fun WordBlanks(
+@OptIn(ExperimentalMaterial3Api::class)
+private fun TopBar(
+    titleText: String?,
+    onBackPress: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            if (titleText != null) Text(text = titleText)
+        },
+        navigationIcon = {
+            BackButton(
+                onBackPress = onBackPress
+            )
+        }
+    )
+}
+
+@Composable
+private fun WordBlanks(
     currentWordsAndPunctuation: List<ChooseNextWordViewModel.WordGuessState>,
     currentGuessIndex: Int,
     lastGuessIncorrect: Boolean,
@@ -183,7 +205,7 @@ private fun shouldShowBlank(wordGuessState: ChooseNextWordViewModel.WordGuessSta
 }
 
 @Composable
-fun AvailableGuesses(
+private fun AvailableGuesses(
     availableGuesses: List<ChooseNextWordViewModel.WordGuessState>,
     onGuess: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -203,7 +225,7 @@ fun AvailableGuesses(
     }
 }
 
-fun String.toEmptySpaces(): String {
+private fun String.toEmptySpaces(): String {
     val stringBuilder = StringBuilder()
 
     repeat(this.length) {
@@ -213,7 +235,7 @@ fun String.toEmptySpaces(): String {
 }
 
 @Composable
-fun CorrectGuessIndicator(
+private fun CorrectGuessIndicator(
     currentGuessCount: Int,
     currentWords: List<ChooseNextWordViewModel.WordGuessState>,
     modifier: Modifier = Modifier
@@ -239,7 +261,7 @@ fun CorrectGuessIndicator(
 }
 
 @Composable
-fun WordBlanksArea(
+private fun WordBlanksArea(
     currentVerse: String,
     currentWords: List<ChooseNextWordViewModel.WordGuessState>,
     currentGuessIndex: Int,
@@ -267,7 +289,7 @@ fun WordBlanksArea(
 }
 
 @Composable
-fun GoNextButton(
+private fun GoNextButton(
     onGoNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -290,7 +312,7 @@ fun GoNextButton(
 }
 
 @Composable
-fun CompleteButton(
+private fun CompleteButton(
     onComplete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
