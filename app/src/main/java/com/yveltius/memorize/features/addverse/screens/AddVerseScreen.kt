@@ -196,7 +196,10 @@ fun AddVerseScreen(
 
                 showConfirmExitWithoutSavingDialog -> {
                     ConfirmExitWithoutSavingDialog(
-                        onConfirmExitWithoutSaving = onBackPress,
+                        onConfirmExitWithoutSaving = {
+                            showConfirmExitWithoutSavingDialog = false
+                            onBackPress()
+                        },
                         onDismissRequest = {
                             showConfirmExitWithoutSavingDialog = false
                         }
