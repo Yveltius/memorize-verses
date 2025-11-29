@@ -8,8 +8,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.yveltius.memorize.features.addverse.screens.AddVerseScreen
-import com.yveltius.memorize.ui.screens.ChooseNextWordScreen
+import com.yveltius.memorize.features.settings.screens.SettingsScreen
+import com.yveltius.memorize.features.settings.screens.SupportTicketScreen
 import com.yveltius.memorize.features.verselist.screens.VerseListScreen
+import com.yveltius.memorize.ui.screens.ChooseNextWordScreen
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
@@ -32,6 +34,9 @@ class MainActivity : ComponentActivity() {
                                     verseUUIDString = verse.uuid.toString()
                                 )
                             )
+                        },
+                        onGoToSettings = {
+                            navController.navigate(route = Settings)
                         }
                     )
                 }
@@ -55,6 +60,17 @@ class MainActivity : ComponentActivity() {
                         verseUUIDString = chooseNextWord.verseUUIDString
                     )
                 }
+
+                composable<Settings> {
+                    SettingsScreen(
+                        onBackPress = { navController.navigateUp() },
+                        onGoToSupportTicket = { navController.navigate(route = SupportTicket) }
+                    )
+                }
+
+                composable<SupportTicket> {
+                    SupportTicketScreen(onBackPress = { navController.navigateUp() })
+                }
             }
         }
     }
@@ -75,3 +91,9 @@ private data class EditVerse(
 private data class ChooseNextWord(
     val verseUUIDString: String
 )
+
+@Serializable
+private object Settings
+
+@Serializable
+private object SupportTicket

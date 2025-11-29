@@ -19,6 +19,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -28,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,9 +48,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yveltius.memorize.R
+import com.yveltius.memorize.features.verselist.viewmodels.VersesListViewModel
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
-import com.yveltius.memorize.features.verselist.viewmodels.VersesListViewModel
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 
@@ -58,6 +60,7 @@ fun VerseListScreen(
     onAddVerse: () -> Unit,
     onEditVerse: (Verse) -> Unit,
     onGoToChooseNextWord: (Verse) -> Unit,
+    onGoToSettings: () -> Unit,
     versesListViewModel: VersesListViewModel = viewModel()
 ) {
     val uiState by versesListViewModel.uiState.collectAsState()
@@ -69,6 +72,7 @@ fun VerseListScreen(
         onFabClick = onAddVerse,
         onDeleteConfirmed = versesListViewModel::removeVerse,
         onGoToChooseNextWord = onGoToChooseNextWord,
+        onGoToSettings = onGoToSettings
     )
 }
 
@@ -79,6 +83,7 @@ fun MainView(
     onEdit: (Verse) -> Unit,
     onDeleteConfirmed: (Verse) -> Unit,
     onGoToChooseNextWord: (Verse) -> Unit,
+    onGoToSettings: () -> Unit,
 ) {
     var showDeletePrompt by remember { mutableStateOf(value = false) }
     var verseToBeDeleted: Verse? by remember { mutableStateOf(value = null) }
@@ -87,18 +92,16 @@ fun MainView(
     AppTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
+            topBar = {
+                VerseListTopBar(
+                    onGoToSettings = onGoToSettings
+                )
+            },
             floatingActionButton = {
-                AnimatedVisibility(visible = lazyListState.lastScrolledBackward || !lazyListState.canScrollBackward) {
-                    FloatingActionButton(
-                        onClick = onFabClick,
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.outline_add_24),
-                            contentDescription = null
-                        )
-                    }
-                }
+                AddVerseFAB(
+                    lazyListState = lazyListState,
+                    onFabClick = onFabClick
+                )
             }
         ) { contentPadding ->
             Surface(
@@ -137,6 +140,47 @@ fun MainView(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun VerseListTopBar(
+    onGoToSettings: () -> Unit
+) {
+    TopAppBar(
+        title = {},
+        actions = {
+            IconButton(
+                onClick = onGoToSettings
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.icon_settings),
+                    contentDescription = stringResource(R.string.content_description_settings)
+                )
+            }
+        }
+    )
+}
+
+@Composable
+private fun AddVerseFAB(
+    lazyListState: LazyListState,
+    onFabClick: () -> Unit
+) {
+    AnimatedVisibility(
+        visible = lazyListState.lastScrolledBackward
+                || !lazyListState.canScrollBackward
+    ) {
+        FloatingActionButton(
+            onClick = onFabClick,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.outline_add_24),
+                contentDescription = stringResource(R.string.content_description_add_verse)
+            )
+        }
+    }
+}
+
 @Composable
 private fun DeleteVerseAlertDialog(
     onDismissRequest: () -> Unit,
@@ -170,7 +214,7 @@ private fun DeleteVerseAlertDialog(
 }
 
 @Composable
-fun Content(
+private fun Content(
     verses: List<Verse>,
     contentPadding: PaddingValues,
     lazyListState: LazyListState,
@@ -210,7 +254,7 @@ fun Content(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun VerseView(
+private fun VerseView(
     verse: Verse,
     onEdit: (Verse) -> Unit,
     onShowDeletePrompt: (Verse) -> Unit,
@@ -234,7 +278,11 @@ fun VerseView(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = verse.getVerseString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = verse.getVerseString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
                 IconButton(
                     onClick = {
                         expanded = !expanded
@@ -273,7 +321,7 @@ fun VerseView(
 }
 
 @Composable
-fun VerseDropdownMenu(
+private fun VerseDropdownMenu(
     verse: Verse,
     expanded: Boolean,
     onDismissRequest: () -> Unit,
