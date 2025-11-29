@@ -11,6 +11,7 @@ import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
@@ -25,7 +26,7 @@ class AddVerseViewModel : ViewModel() {
     private val getAllTagsUseCase: GetAllTagsUseCase by KoinJavaComponent.inject(GetAllTagsUseCase::class.java)
 
     private val _uiState = MutableStateFlow(value = UiState())
-    val uiState: StateFlow<UiState> = _uiState
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     init {
         getAllTags()

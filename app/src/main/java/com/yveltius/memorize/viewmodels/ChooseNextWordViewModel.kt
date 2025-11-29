@@ -6,6 +6,7 @@ import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.entity.verses.Verse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
@@ -15,7 +16,7 @@ class ChooseNextWordViewModel: ViewModel() {
     private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
 
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(value = UiState())
-    val uiState: StateFlow<UiState> = _uiState
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     fun getVerse(verseUUIDString: String) {
         _uiState.update {

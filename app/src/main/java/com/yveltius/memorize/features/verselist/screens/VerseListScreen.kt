@@ -31,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,8 +64,8 @@ fun VerseListScreen(
 ) {
     val uiState by versesListViewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) { versesListViewModel.getVerses() }
-    MainView(
+    // todo the way I did this screen isn't quite right
+    Root(
         uiState = uiState,
         onEdit = onEditVerse,
         onFabClick = onAddVerse,
@@ -77,7 +76,7 @@ fun VerseListScreen(
 }
 
 @Composable
-fun MainView(
+private fun Root(
     uiState: VersesListViewModel.UiState,
     onFabClick: () -> Unit,
     onEdit: (Verse) -> Unit,
@@ -146,7 +145,7 @@ private fun VerseListTopBar(
     onGoToSettings: () -> Unit
 ) {
     TopAppBar(
-        title = {},
+        title = { Text(text = stringResource(R.string.top_bar_title_verses_list)) },
         actions = {
             IconButton(
                 onClick = onGoToSettings
