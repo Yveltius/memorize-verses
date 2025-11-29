@@ -38,6 +38,7 @@ import com.yveltius.memorize.features.settings.screens.Root
 import com.yveltius.memorize.features.settings.viewmodels.SupportTicketViewModel
 import com.yveltius.memorize.ui.components.BackButton
 import com.yveltius.memorize.ui.theme.AppTheme
+import androidx.core.net.toUri
 
 @Composable
 fun SupportTicketScreen(
@@ -53,6 +54,8 @@ fun SupportTicketScreen(
         val snackbarString = context.getString(R.string.snackbar_no_email_client_found)
         if (uiState.hasNoActivityError) {
             snackbarHostState.showSnackbar(message = snackbarString)
+
+            supportTicketViewModel.clearErrors()
         }
     }
 
@@ -60,6 +63,8 @@ fun SupportTicketScreen(
         val snackbarString = context.getString(R.string.snackbar_support_ticket_unknown_error)
         if (uiState.hasUnknownError) {
             snackbarHostState.showSnackbar(message = snackbarString)
+
+            supportTicketViewModel.clearErrors()
         }
     }
 
@@ -73,6 +78,8 @@ fun SupportTicketScreen(
                 onSubjectChanged = supportTicketViewModel::onSubjectChanged,
                 body = uiState.body,
                 onBodyChanged = supportTicketViewModel::onBodyChanged,
+                onNoActivityError = supportTicketViewModel::onNoActivityFound,
+                onUnknownError = supportTicketViewModel::onUnknownError,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues = innerPadding)
@@ -97,6 +104,8 @@ private fun Root(
     onSubjectChanged: (String) -> Unit,
     body: String,
     onBodyChanged: (String) -> Unit,
+    onNoActivityError: () -> Unit,
+    onUnknownError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -120,10 +129,12 @@ private fun Root(
 
         Button(
             onClick = {
-                SendSupportTicket(
+                sendSupportTicket(
                     context = context,
                     subject = subject,
-                    body = body
+                    body = body,
+                    onNoActivityError = onNoActivityError,
+                    onUnknownError = onUnknownError,
                 )
             },
             modifier = Modifier.align(Alignment.End)
@@ -172,19 +183,19 @@ private fun Body(
     )
 }
 
-private fun SendSupportTicket(context: Context, subject: String, body: String) {
+private fun sendSupportTicket(context: Context, subject: String, body: String, onNoActivityError: () -> Unit, onUnknownError: () -> Unit) {
     val supportTicketEmailAddress = context.getString(R.string.support_ticket_email)
     try {
-        val supportTicketUri = Uri.parse("mailto:$supportTicketEmailAddress?subject=${Uri.encode(subject)}&body=${Uri.encode(body)}")
+        val supportTicketUri = "mailto:$supportTicketEmailAddress?subject=${Uri.encode(subject)}&body=${Uri.encode(body)}".toUri()
         val sendSupportTicketIntent = Intent(Intent.ACTION_SENDTO, supportTicketUri)
 
         sendSupportTicketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         context.startActivity(sendSupportTicketIntent)
     } catch (e: ActivityNotFoundException) {
-
+        onNoActivityError()
     } catch (throwable: Throwable) {
-
+        onUnknownError()
     }
 }
 
@@ -196,6 +207,8 @@ private fun RootPreview() {
         onSubjectChanged = { },
         body = "This is my test body.",
         onBodyChanged = {},
+        onNoActivityError = {},
+        onUnknownError = {},
         modifier = Modifier.fillMaxSize().padding(16.dp)
     )
 }

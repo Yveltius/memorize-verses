@@ -64,7 +64,8 @@ fun VerseListScreen(
 ) {
     val uiState by versesListViewModel.uiState.collectAsState()
 
-    // todo the way I did this screen isn't quite right
+    // todo the way I did this screen isn't quite right, need to abstract correctly
+    //  and not directly pass UiState object
     Root(
         uiState = uiState,
         onEdit = onEditVerse,
