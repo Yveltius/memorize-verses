@@ -156,6 +156,14 @@ class ChooseNextWordWithPunctuation {
         )
     }
 
+    @Test
+    fun `parsing text with a newline`() {
+        doTestWithGivenText(
+            givenText = "good;\nDwell",
+            expected = listOf("good", ";", "Dwell")
+        )
+    }
+
     private fun doTestWithGivenText(givenText: String, expected: List<String>) {
         val actual = ChooseNextWord().parseTextKeepingPunctuation(text = givenText)
 

@@ -14,7 +14,7 @@ class ChooseNextWord {
         assert(text.isNotEmpty())
 
         val parsedText = text
-            .split(' ')
+            .split(' ', '\n')
             .map { word ->
                 val specialCharRegexString = "[.?!,();:…\"\\[\\]]"
                 val specialCharArray = charArrayOf('.', '?', '!', ',', '\"', '(', ')', '…', '[', ']', ';', ':', '\'')

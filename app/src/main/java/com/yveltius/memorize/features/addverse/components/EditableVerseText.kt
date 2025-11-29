@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import com.yveltius.memorize.R
 import com.yveltius.memorize.features.addverse.viewmodels.AddVerseViewModel
@@ -23,6 +24,7 @@ fun EditableVerseText(
         onValueChange = { onVerseTextChanged(index, it) },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Text,
+            capitalization = KeyboardCapitalization.Sentences,
             imeAction = ImeAction.Done
         ),
         label = {

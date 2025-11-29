@@ -56,7 +56,6 @@ import com.yveltius.memorize.ui.components.BackButton
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
-import kotlinx.coroutines.delay
 import java.util.UUID
 
 @Composable
@@ -110,7 +109,7 @@ fun AddVerseScreen(
 
     LaunchedEffect(uiState.encounteredSaveError) {
         if (uiState.encounteredSaveError) {
-            val snackbarString = context.getString(R.string.input_error)
+            val snackbarString = context.getString(R.string.snackbar_check_inputs)
 
             snackbarHostState.showSnackbar(message = snackbarString)
 
