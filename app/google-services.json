@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "567701914618",
+    "project_id": "memorize-verses",
+    "storage_bucket": "memorize-verses.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:567701914618:android:30e5695243ded19ef11a43",
+        "android_client_info": {
+          "package_name": "com.yveltius.memorize"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7tSgd4Wx8MLTQNxUQTp7ERwPbfLB0bI8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
