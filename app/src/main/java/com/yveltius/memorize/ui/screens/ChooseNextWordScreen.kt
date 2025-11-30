@@ -18,7 +18,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -41,10 +40,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.compose.errorDark
-import com.example.compose.errorLight
-import com.example.compose.onSurfaceDark
-import com.example.compose.onSurfaceLight
+import com.yveltius.memorize.ui.theme.errorDark
+import com.yveltius.memorize.ui.theme.errorLight
+import com.yveltius.memorize.ui.theme.onSurfaceDark
+import com.yveltius.memorize.ui.theme.onSurfaceLight
 import com.yveltius.memorize.R
 import com.yveltius.memorize.ui.components.BackButton
 import com.yveltius.memorize.ui.theme.AppTheme
