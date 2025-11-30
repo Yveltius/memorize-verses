@@ -2,7 +2,7 @@ package com.yveltius.memorize
 
 import android.app.Application
 import com.yveltius.memorize.features.addverse.viewmodels.AddVerseViewModel
-import com.yveltius.memorize.viewmodels.ChooseNextWordViewModel
+import com.yveltius.memorize.features.choosenextword.viewmodels.ChooseNextWordViewModel
 import com.yveltius.memorize.features.verselist.viewmodels.VersesListViewModel
 import com.yveltius.versememorization.KoinModules
 import org.koin.android.ext.koin.androidContext
