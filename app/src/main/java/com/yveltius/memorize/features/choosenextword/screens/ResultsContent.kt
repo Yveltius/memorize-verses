@@ -67,17 +67,19 @@ fun ResultsContent(
                     Spacer(modifier = Modifier.weight(1f))
                 }
 
-                VerticalGrid(
-                    items = allWordsStates,
-                    columns = 2,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) { index, item ->
-                    ScoredResult(
-                        topText = verse.getVerseString(index = index),
-                        scorePercentage = item.getScore(guessCount = guessCounts[index]),
-                        modifier = Modifier.weight(1f)
-                    )
+                if (allWordsStates.size > 1) {
+                    VerticalGrid(
+                        items = allWordsStates,
+                        columns = 2,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) { index, item ->
+                        ScoredResult(
+                            topText = verse.getVerseString(index = index),
+                            scorePercentage = item.getScore(guessCount = guessCounts[index]),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
