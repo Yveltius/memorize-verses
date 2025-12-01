@@ -10,10 +10,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
+import org.koin.java.KoinJavaComponent.inject
 import java.util.UUID
 
 class ChooseNextWordViewModel: ViewModel() {
-    private val getVersesUseCase: GetVersesUseCase by KoinJavaComponent.inject(GetVersesUseCase::class.java)
+    private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
 
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
