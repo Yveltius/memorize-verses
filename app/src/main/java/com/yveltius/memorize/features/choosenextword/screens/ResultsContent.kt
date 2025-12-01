@@ -75,7 +75,7 @@ fun ResultsContent(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) { index, item ->
                         ScoredResult(
-                            topText = verse.getVerseString(index = index),
+                            topText = stringResource(R.string.results_verse, verse.verseText[index].verseNumber),// verse.getVerseString(index = index),
                             scorePercentage = item.getScore(guessCount = guessCounts[index]),
                             modifier = Modifier.weight(1f)
                         )
@@ -116,7 +116,7 @@ private fun ScoredResult(
             val localDensity = LocalDensity.current
             val maxSize = with(localDensity) { this@BoxWithConstraints.maxWidth }
             val topTextSize =
-                maxSize * if (topText.length < 12) 0.15f else if (topText.length < 17) 0.1f else 0.08f
+                maxSize * if (topText.length < 12) 0.12f else if (topText.length < 17) 0.1f else 0.08f
             val scoreTextSize =
                 maxSize * if (topText.length < 12) 0.2f else if (topText.length < 17) 0.15f else 0.12f
             Column(

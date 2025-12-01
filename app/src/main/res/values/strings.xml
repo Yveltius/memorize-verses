@@ -45,6 +45,7 @@
 
     <!-- Choose Next Word Screen -->
     <string name="results_overall">Overall</string>
+    <string name="results_verse">Verse %1$s</string>
 
     <!-- Settings Screen -->
     <string name="top_bar_title_settings">Settings</string>
