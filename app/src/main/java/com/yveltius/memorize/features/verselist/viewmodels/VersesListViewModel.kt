@@ -21,10 +21,6 @@ class VersesListViewModel : ViewModel() {
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    init {
-        getVerses()
-    }
-
     fun getVerses() {
         viewModelScope.launch {
             getVersesUseCase.getVerses()

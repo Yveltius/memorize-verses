@@ -51,7 +51,7 @@ fun SettingsScreen(
                 SettingsTopBar(onBackPress = onBackPress)
             }
         ) { innerPadding ->
-            Root(
+            RootView(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues = innerPadding)
@@ -72,7 +72,7 @@ private fun SettingsTopBar(onBackPress: () -> Unit) {
 }
 
 @Composable
-private fun Root(
+private fun RootView(
     onGoToSupportTicket: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -108,7 +108,7 @@ private fun Root(
 @Preview(showBackground = true)
 @Composable
 private fun RootLightPreview() {
-    Root(
+    RootView(
         onGoToSupportTicket = {}, modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)

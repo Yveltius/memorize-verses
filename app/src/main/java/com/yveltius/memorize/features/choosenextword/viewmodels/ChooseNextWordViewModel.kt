@@ -1,4 +1,4 @@
-package com.yveltius.memorize.viewmodels
+package com.yveltius.memorize.features.choosenextword.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent
 import org.koin.java.KoinJavaComponent.inject
 import java.util.UUID
 
@@ -116,6 +117,9 @@ class ChooseNextWordViewModel: ViewModel() {
         val showNextButton = newCurrentWords.all { it.isGuessed || !it.isGuessable }
                 && (currentWordsListIndex < uiState.value.allWordsStates.size - 1)
 
+        val showResultsButton = newCurrentWords.all { it.isGuessed || !it.isGuessable }
+                && currentWordsListIndex >= (uiState.value.allWordsStates.size - 1)
+
         val showFinishButton = newCurrentWords.all { it.isGuessed || !it.isGuessable }
                 && currentWordsListIndex >= (uiState.value.allWordsStates.size - 1)
 
@@ -128,6 +132,7 @@ class ChooseNextWordViewModel: ViewModel() {
                 currentGuessIndex = currentGuessIndex,
                 lastGuessIncorrect = false,
                 showNextButton = showNextButton,
+                showResultsButton = showResultsButton,
                 showFinishButton = showFinishButton
             )
         }
@@ -148,7 +153,22 @@ class ChooseNextWordViewModel: ViewModel() {
                 guessCounts = it.guessCounts + it.currentGuessCount,
                 currentGuessCount = 0,
                 showNextButton = false,
+                showResultsButton = false,
                 showFinishButton = false
+            )
+        }
+    }
+
+    fun goToResults() {
+        _uiState.update {
+            it.copy(
+                allWordsStates = it.allWordsStates,
+                guessCounts = it.guessCounts + it.currentGuessCount,
+                currentGuessCount = 0,
+                showNextButton = false,
+                showResultsButton = false,
+                showFinishButton = true,
+                showResults = true
             )
         }
     }
@@ -176,7 +196,9 @@ class ChooseNextWordViewModel: ViewModel() {
         val verse: Verse? = null,
         val lastGuessIncorrect: Boolean = false,
         val showNextButton: Boolean = false,
-        val showFinishButton: Boolean = false
+        val showResultsButton: Boolean = false,
+        val showFinishButton: Boolean = false,
+        val showResults: Boolean = false
     ) {
         val currentVerse: String?
             get() {

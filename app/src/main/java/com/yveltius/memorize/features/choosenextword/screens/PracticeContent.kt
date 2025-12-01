@@ -1,4 +1,4 @@
-package com.yveltius.memorize.ui.screens
+package com.yveltius.memorize.features.choosenextword.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -15,17 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,113 +32,81 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yveltius.memorize.R
+import com.yveltius.memorize.features.choosenextword.viewmodels.ChooseNextWordViewModel
 import com.yveltius.memorize.ui.theme.errorDark
 import com.yveltius.memorize.ui.theme.errorLight
 import com.yveltius.memorize.ui.theme.onSurfaceDark
 import com.yveltius.memorize.ui.theme.onSurfaceLight
-import com.yveltius.memorize.R
-import com.yveltius.memorize.ui.components.BackButton
-import com.yveltius.memorize.ui.theme.AppTheme
-import com.yveltius.memorize.viewmodels.ChooseNextWordViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChooseNextWordScreen(
-    onBackPress: () -> Unit,
-    verseUUIDString: String,
-    chooseNextWordViewModel: ChooseNextWordViewModel = viewModel()
+fun PracticeContent(
+    currentGuessCount: Int,
+    currentWordsStates: List<ChooseNextWordViewModel.WordGuessState>,
+    currentVerse: String?,
+    currentGuessIndex: Int,
+    lastGuessIncorrect: Boolean,
+    availableGuesses: List<ChooseNextWordViewModel.WordGuessState>,
+    onGuess: (String) -> Unit,
+    showNextButton: Boolean,
+    showResultsButton: Boolean,
+    onGoNext: () -> Unit,
+    onGoToResults: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(Unit) {
-        chooseNextWordViewModel.getVerse(verseUUIDString = verseUUIDString)
-    }
+    Column(
+        modifier = modifier
+    ) {
+        CorrectGuessIndicator(
+            currentGuessCount = currentGuessCount,
+            currentWords = currentWordsStates,
+            modifier = Modifier.fillMaxWidth()
+        )
 
-    val uiState by chooseNextWordViewModel.uiState.collectAsState()
+        WordBlanksArea(
+            currentVerse = currentVerse
+                ?: stringResource(R.string.encountered_error_for_verse_string),
+            currentWords = currentWordsStates,
+            currentGuessIndex = currentGuessIndex,
+            lastGuessIncorrect = lastGuessIncorrect,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
 
-    AppTheme {
-        Scaffold(
-            topBar = {
-                TopBar(
-                    titleText = uiState.verse?.getVerseString(),
-                    onBackPress = onBackPress
-                )
-            },
-            modifier = Modifier.fillMaxSize()
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                CorrectGuessIndicator(
-                    currentGuessCount = uiState.currentGuessCount,
-                    currentWords = uiState.currentWordsStates,
-                    modifier = Modifier.fillMaxWidth()
-                )
+        Spacer(modifier = Modifier.weight(1f))
 
-                WordBlanksArea(
-                    currentVerse = uiState.currentVerse
-                        ?: stringResource(R.string.encountered_error_for_verse_string),
-                    currentWords = uiState.currentWordsStates,
-                    currentGuessIndex = uiState.currentGuessIndex,
-                    lastGuessIncorrect = uiState.lastGuessIncorrect,
+        AvailableGuesses(
+            availableGuesses = availableGuesses,
+            onGuess = onGuess,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
+
+        when {
+            showNextButton -> {
+                GoNextButton(
+                    onGoNext = onGoNext,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
                 )
+            }
 
-                Spacer(modifier = Modifier.weight(1f))
-
-                AvailableGuesses(
-                    availableGuesses = uiState.availableGuesses,
-                    onGuess = chooseNextWordViewModel::onGuess,
+            showResultsButton -> {
+                GoToResultsButton(
+                    onGoToResults = onGoToResults,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
                 )
-
-                if (uiState.showNextButton) {
-                    GoNextButton(
-                        onGoNext = chooseNextWordViewModel::goNext,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-                } else if (uiState.showFinishButton) {
-                    CompleteButton(
-                        onComplete = {
-                            chooseNextWordViewModel.onComplete()
-                            onBackPress()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-                }
             }
         }
     }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun TopBar(
-    titleText: String?,
-    onBackPress: () -> Unit
-) {
-    TopAppBar(
-        title = {
-            if (titleText != null) Text(text = titleText)
-        },
-        navigationIcon = {
-            BackButton(
-                onBackPress = onBackPress
-            )
-        }
-    )
 }
 
 @Composable
@@ -311,23 +274,44 @@ private fun GoNextButton(
 }
 
 @Composable
-private fun CompleteButton(
-    onComplete: () -> Unit,
+private fun GoToResultsButton(
+    onGoToResults: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
     ) {
         FilledTonalIconButton(
-            onClick = onComplete,
+            onClick = onGoToResults,
             modifier = Modifier
                 .size(48.dp)
                 .align(alignment = Alignment.CenterEnd)
         ) {
             Icon(
-                painter = painterResource(R.drawable.outline_check_24),
-                contentDescription = null
+                painter = painterResource(R.drawable.icon_results),
+                contentDescription = stringResource(R.string.content_description_see_results),
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ScreenPreview() {
+    PracticeContent(
+        currentGuessCount = 0,
+        currentWordsStates = listOf(),
+        currentVerse = "John 1:1",
+        currentGuessIndex = 0,
+        lastGuessIncorrect = false,
+        availableGuesses = listOf(),
+        onGuess = { },
+        showNextButton = false,
+        showResultsButton = false,
+        onGoNext = {},
+        onGoToResults = {},
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    )
 }

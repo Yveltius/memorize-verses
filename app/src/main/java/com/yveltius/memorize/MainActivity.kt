@@ -11,7 +11,7 @@ import com.yveltius.memorize.features.addverse.screens.AddVerseScreen
 import com.yveltius.memorize.features.settings.screens.SettingsScreen
 import com.yveltius.memorize.features.settings.screens.SupportTicketScreen
 import com.yveltius.memorize.features.verselist.screens.VerseListScreen
-import com.yveltius.memorize.ui.screens.ChooseNextWordScreen
+import com.yveltius.memorize.features.choosenextword.screens.ChooseNextWordScreen
 import kotlinx.serialization.Serializable
 import java.util.UUID
 

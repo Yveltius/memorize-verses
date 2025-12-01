@@ -349,6 +349,8 @@ class AddVerseViewModel : ViewModel() {
     }
 
     private fun verseListsMatch(verseList: List<VerseNumberAndText>, addVerseList: List<AddVerseNumberAndText>): Boolean {
+        if (verseList.size != addVerseList.size) return false
+
         verseList.forEachIndexed { index, verse ->
             val versesMatch = versesMatch(
                 verse = verse,
@@ -357,6 +359,7 @@ class AddVerseViewModel : ViewModel() {
 
             if (!versesMatch) return@verseListsMatch false
         }
+
         return verseList.size == addVerseList.size
     }
 
