@@ -43,7 +43,7 @@ import com.yveltius.memorize.ui.theme.onSurfaceDark
 import com.yveltius.memorize.ui.theme.onSurfaceLight
 
 @Composable
-fun PracticeScreen(
+fun PracticeContent(
     currentGuessCount: Int,
     currentWordsStates: List<ChooseNextWordViewModel.WordGuessState>,
     currentVerse: String?,
@@ -288,9 +288,8 @@ private fun GoToResultsButton(
                 .align(alignment = Alignment.CenterEnd)
         ) {
             Icon(
-                painter = painterResource(R.drawable.outline_arrow_back_24),
-                contentDescription = null,
-                modifier = Modifier.rotate(180.0f)
+                painter = painterResource(R.drawable.icon_results),
+                contentDescription = stringResource(R.string.content_description_see_results),
             )
         }
     }
@@ -299,7 +298,7 @@ private fun GoToResultsButton(
 @Preview(showBackground = true)
 @Composable
 private fun ScreenPreview() {
-    PracticeScreen(
+    PracticeContent(
         currentGuessCount = 0,
         currentWordsStates = listOf(),
         currentVerse = "John 1:1",

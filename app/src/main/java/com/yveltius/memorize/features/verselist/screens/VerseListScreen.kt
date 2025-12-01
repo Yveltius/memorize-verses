@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,9 +65,14 @@ fun VerseListScreen(
 ) {
     val uiState by versesListViewModel.uiState.collectAsState()
 
+    LaunchedEffect(Unit) {
+        // having this here means the verses will be fetched again when returning from add/edit
+        versesListViewModel.getVerses()
+    }
+
     // todo the way I did this screen isn't quite right, need to abstract correctly
     //  and not directly pass UiState object
-    Root(
+    RootView(
         uiState = uiState,
         onEdit = onEditVerse,
         onFabClick = onAddVerse,
@@ -77,7 +83,7 @@ fun VerseListScreen(
 }
 
 @Composable
-private fun Root(
+private fun RootView(
     uiState: VersesListViewModel.UiState,
     onFabClick: () -> Unit,
     onEdit: (Verse) -> Unit,

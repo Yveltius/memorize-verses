@@ -1,5 +1,6 @@
 package com.yveltius.memorize.features.choosenextword.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -49,31 +50,42 @@ fun ChooseNextWordScreen(
             },
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
-            if (!uiState.showResults) {
-                PracticeScreen(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .verticalScroll(rememberScrollState()),
-                    currentGuessCount = uiState.currentGuessCount,
-                    currentWordsStates = uiState.currentWordsStates,
-                    currentVerse = uiState.currentVerse,
-                    currentGuessIndex = uiState.currentGuessIndex,
-                    lastGuessIncorrect = uiState.lastGuessIncorrect,
-                    availableGuesses = uiState.availableGuesses,
-                    onGuess = chooseNextWordViewModel::onGuess,
-                    showNextButton = uiState.showNextButton,
-                    showResultsButton = uiState.showResultsButton,
-                    onGoNext = chooseNextWordViewModel::goNext,
-                    onGoToResults = chooseNextWordViewModel::goToResults
-                )
-            } else {
-                ResultsScreen(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .verticalScroll(rememberScrollState())
-                )
+            AnimatedContent(
+                targetState = uiState.showResults
+            ) { showResults ->
+                if (!showResults) {
+                    PracticeContent(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .verticalScroll(rememberScrollState()),
+                        currentGuessCount = uiState.currentGuessCount,
+                        currentWordsStates = uiState.currentWordsStates,
+                        currentVerse = uiState.currentVerse,
+                        currentGuessIndex = uiState.currentGuessIndex,
+                        lastGuessIncorrect = uiState.lastGuessIncorrect,
+                        availableGuesses = uiState.availableGuesses,
+                        onGuess = chooseNextWordViewModel::onGuess,
+                        showNextButton = uiState.showNextButton,
+                        showResultsButton = uiState.showResultsButton,
+                        onGoNext = chooseNextWordViewModel::goNext,
+                        onGoToResults = chooseNextWordViewModel::goToResults
+                    )
+                } else {
+                    ResultsContent(
+                        allWordsStates = uiState.allWordsStates,
+                        guessCounts = uiState.guessCounts,
+                        onComplete = {
+                            chooseNextWordViewModel.onComplete()
+                            onBackPress()
+                        },
+                        verse = uiState.verse!!, // this should never be null if you have already been in practice
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(horizontal = 16.dp)
+                    )
+                }
             }
         }
     }
@@ -95,26 +107,4 @@ private fun TopBar(
             )
         }
     )
-}
-
-@Composable
-private fun CompleteButton(
-    onComplete: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-    ) {
-        FilledTonalIconButton(
-            onClick = onComplete,
-            modifier = Modifier
-                .size(48.dp)
-                .align(alignment = Alignment.CenterEnd)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.outline_check_24),
-                contentDescription = null
-            )
-        }
-    }
 }

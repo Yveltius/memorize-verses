@@ -34,7 +34,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yveltius.memorize.R
-import com.yveltius.memorize.features.settings.screens.Root
 import com.yveltius.memorize.features.settings.viewmodels.SupportTicketViewModel
 import com.yveltius.memorize.ui.components.BackButton
 import com.yveltius.memorize.ui.theme.AppTheme
@@ -71,9 +70,9 @@ fun SupportTicketScreen(
     AppTheme {
         Scaffold(
             topBar = { SupportTicketTopBar(onBackPress = onBackPress) },
-            snackbarHost = { SnackbarHost(hostState = snackbarHostState)}
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
         ) { innerPadding ->
-            Root(
+            RootView(
                 subject = uiState.subject,
                 onSubjectChanged = supportTicketViewModel::onSubjectChanged,
                 body = uiState.body,
@@ -99,7 +98,7 @@ private fun SupportTicketTopBar(onBackPress: () -> Unit) {
 }
 
 @Composable
-private fun Root(
+private fun RootView(
     subject: String,
     onSubjectChanged: (String) -> Unit,
     body: String,
@@ -183,7 +182,13 @@ private fun Body(
     )
 }
 
-private fun sendSupportTicket(context: Context, subject: String, body: String, onNoActivityError: () -> Unit, onUnknownError: () -> Unit) {
+private fun sendSupportTicket(
+    context: Context,
+    subject: String,
+    body: String,
+    onNoActivityError: () -> Unit,
+    onUnknownError: () -> Unit
+) {
     val supportTicketEmailAddress = context.getString(R.string.support_ticket_email)
     try {
         val supportTicketUri = "mailto:$supportTicketEmailAddress?subject=${Uri.encode(subject)}&body=${Uri.encode(body)}".toUri()
@@ -202,13 +207,15 @@ private fun sendSupportTicket(context: Context, subject: String, body: String, o
 @Preview(showBackground = true)
 @Composable
 private fun RootPreview() {
-    Root(
+    RootView(
         subject = "Test Subject",
         onSubjectChanged = { },
         body = "This is my test body.",
         onBodyChanged = {},
         onNoActivityError = {},
         onUnknownError = {},
-        modifier = Modifier.fillMaxSize().padding(16.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
     )
 }
