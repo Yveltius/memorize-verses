@@ -170,7 +170,7 @@ class ChooseNextWordWithPunctuation {
         println("$expected\n$actual")
 
         assertTrue(
-            message = "Expected: $expected,\nActual:   $actual"
+            message = "Expected: $expected,\nActual: $actual"
         ) {
             expected.containsAll(actual) && actual.containsAll(expected)
         }

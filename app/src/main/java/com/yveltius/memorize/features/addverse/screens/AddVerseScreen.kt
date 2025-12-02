@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -215,11 +216,17 @@ fun TopBar(
     onBackPress: () -> Unit,
     onSave: () -> Unit,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
     TopAppBar(
         title = { Text(text = stringResource(R.string.add_verse_text)) },
         navigationIcon = { BackButton(onBackPress = onBackPress) },
         actions = {
-            IconButton(onClick = onSave) {
+            IconButton(
+                onClick = {
+                    keyboardController?.hide()
+                    onSave()
+                }
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.outline_save_24),
                     contentDescription = stringResource(R.string.content_description_save)

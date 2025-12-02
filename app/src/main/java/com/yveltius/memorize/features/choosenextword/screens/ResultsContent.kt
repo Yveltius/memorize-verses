@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -87,7 +87,7 @@ fun ResultsContent(
 
             CompleteButton(
                 onComplete = onComplete,
-                modifier = Modifier.fillMaxWidth().padding(16.dp).align(Alignment.BottomEnd)
+                modifier = Modifier.padding(vertical = 16.dp).align(Alignment.BottomEnd)
             )
         }
     }
@@ -138,21 +138,16 @@ private fun CompleteButton(
     onComplete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-    ) {
-        FilledTonalIconButton(
+    FilledIconButton(
             onClick = onComplete,
-            modifier = Modifier
-                .size(48.dp)
-                .align(alignment = Alignment.CenterEnd)
+            modifier = modifier
+                .size(64.dp)
         ) {
             Icon(
                 painter = painterResource(R.drawable.outline_check_24),
                 contentDescription = null
             )
         }
-    }
 }
 
 private fun getOverallScorePercentage(
