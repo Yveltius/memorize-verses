@@ -19,26 +19,34 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExpandedFullScreenSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SearchBarScrollBehavior
+import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopSearchBar
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,11 +56,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yveltius.memorize.R
+import com.yveltius.memorize.features.verselist.components.VersesTopSearchBar
+import com.yveltius.memorize.features.verselist.iconResId
 import com.yveltius.memorize.features.verselist.viewmodels.VersesListViewModel
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
+import com.yveltius.versememorization.data.versesearch.VerseSearchCategory
+import com.yveltius.versememorization.data.versesearch.VerseSearchResult
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -76,31 +89,44 @@ fun VerseListScreen(
         uiState = uiState,
         onEdit = onEditVerse,
         onFabClick = onAddVerse,
+        onQueryChanged = versesListViewModel::onQueryChanged,
         onDeleteConfirmed = versesListViewModel::removeVerse,
         onGoToChooseNextWord = onGoToChooseNextWord,
         onGoToSettings = onGoToSettings
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RootView(
     uiState: VersesListViewModel.UiState,
     onFabClick: () -> Unit,
     onEdit: (Verse) -> Unit,
+    onQueryChanged: (String) -> Unit,
     onDeleteConfirmed: (Verse) -> Unit,
     onGoToChooseNextWord: (Verse) -> Unit,
     onGoToSettings: () -> Unit,
 ) {
+    val scrollBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
+
     var showDeletePrompt by remember { mutableStateOf(value = false) }
     var verseToBeDeleted: Verse? by remember { mutableStateOf(value = null) }
 
     val lazyListState = rememberLazyListState()
+
     AppTheme {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
-                VerseListTopBar(
-                    onGoToSettings = onGoToSettings
+                VersesTopSearchBar(
+                    query = uiState.query,
+                    onQueryChanged = onQueryChanged,
+                    searchResults = uiState.searchResults,
+                    scrollBehavior = scrollBehavior,
+                    allVerses = uiState.verses,
+                    lazyListState = lazyListState
                 )
             },
             floatingActionButton = {
@@ -110,37 +136,33 @@ private fun RootView(
                 )
             }
         ) { contentPadding ->
-            Surface(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Content(
-                    verses = uiState.verses,
-                    contentPadding = contentPadding,
-                    lazyListState = lazyListState,
-                    onEdit = onEdit,
-                    onShowDeletePrompt = {
-                        verseToBeDeleted = it
-                        showDeletePrompt = true
-                    },
-                    onGoToChooseNextWord = onGoToChooseNextWord,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                )
+            Content(
+                verses = uiState.verses,
+                contentPadding = contentPadding,
+                lazyListState = lazyListState,
+                onEdit = onEdit,
+                onShowDeletePrompt = {
+                    verseToBeDeleted = it
+                    showDeletePrompt = true
+                },
+                onGoToChooseNextWord = onGoToChooseNextWord,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
 
-                if (showDeletePrompt) {
-                    DeleteVerseAlertDialog(
-                        onDismissRequest = {
-                            verseToBeDeleted = null
-                            showDeletePrompt = false
-                        },
-                        onConfirmRequest = { verse ->
-                            onDeleteConfirmed(verse)
-                            showDeletePrompt = false
-                        },
-                        verseToBeDeleted = verseToBeDeleted
-                    )
-                }
+            if (showDeletePrompt) {
+                DeleteVerseAlertDialog(
+                    onDismissRequest = {
+                        verseToBeDeleted = null
+                        showDeletePrompt = false
+                    },
+                    onConfirmRequest = { verse ->
+                        onDeleteConfirmed(verse)
+                        showDeletePrompt = false
+                    },
+                    verseToBeDeleted = verseToBeDeleted
+                )
             }
         }
     }
@@ -370,6 +392,22 @@ private fun VerseDropdownMenu(
     }
 }
 
+private val verseForPreviews = Verse(
+    book = "Romans",
+    chapter = 12,
+    verseText = listOf(
+        VerseNumberAndText(
+            verseNumber = 1,
+            text = "Therefore, brothers, I urge you, by the mercies of God, to present your bodies as a living sacrifice - holy and pleasing to God. This is your spiritual worship."
+        ),
+        VerseNumberAndText(
+            verseNumber = 2,
+            text = "Do not be conformed to this age, but be transformed by the renewing of your mind, so that you may discern what is the good, please, and perfect will of God."
+        )
+    ),
+    tags = listOf()
+)
+
 @Preview(
     showBackground = true,
     uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL
@@ -377,21 +415,7 @@ private fun VerseDropdownMenu(
 @Composable
 private fun VerseViewPreviewLight() {
     VerseView(
-        verse = Verse(
-            book = "Romans",
-            chapter = 12,
-            verseText = listOf(
-                VerseNumberAndText(
-                    verseNumber = 1,
-                    text = "Therefore, brothers, I urge you, by the mercies of God, to present your bodies as a living sacrifice - holy and pleasing to God. This is your spiritual worship."
-                ),
-                VerseNumberAndText(
-                    verseNumber = 2,
-                    text = "Do not be conformed to this age, but be transformed by the renewing of your mind, so that you may discern what is the good, please, and perfect will of God."
-                )
-            ),
-            tags = listOf("Discipleship Verse", "Obedience to Christ", "Romans")
-        ),
+        verse = verseForPreviews,
         onEdit = {},
         onShowDeletePrompt = {},
         onGoToChooseNextWord = {},
@@ -401,64 +425,18 @@ private fun VerseViewPreviewLight() {
     )
 }
 
-@Preview(
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL
-)
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun VerseViewPreviewDark() {
-    VerseView(
-        verse = Verse(
-            book = "Romans",
-            chapter = 12,
-            verseText = listOf(
-                VerseNumberAndText(
-                    verseNumber = 1,
-                    text = "Therefore, brothers, I urge you, by the mercies of God, to present your bodies as a living sacrifice - holy and pleasing to God. This is your spiritual worship."
-                ),
-                VerseNumberAndText(
-                    verseNumber = 2,
-                    text = "Do not be conformed to this age, but be transformed by the renewing of your mind, so that you may discern what is the good, please, and perfect will of God."
-                )
-            ),
-            tags = listOf("Discipleship Verse", "Obedience to Christ", "Romans")
-        ),
-        onEdit = {},
-        onShowDeletePrompt = {},
-        onGoToChooseNextWord = {},
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    )
-}
-
-@Preview(
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL
-)
-@Composable
-private fun VerseViewPreviewDarkNoTags() {
-    VerseView(
-        verse = Verse(
-            book = "Romans",
-            chapter = 12,
-            verseText = listOf(
-                VerseNumberAndText(
-                    verseNumber = 1,
-                    text = "Therefore, brothers, I urge you, by the mercies of God, to present your bodies as a living sacrifice - holy and pleasing to God. This is your spiritual worship."
-                ),
-                VerseNumberAndText(
-                    verseNumber = 2,
-                    text = "Do not be conformed to this age, but be transformed by the renewing of your mind, so that you may discern what is the good, please, and perfect will of God."
-                )
-            ),
-            tags = listOf()
-        ),
-        onEdit = {},
-        onShowDeletePrompt = {},
-        onGoToChooseNextWord = {},
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    )
+    AppTheme {
+        VerseView(
+            verse = verseForPreviews,
+            onEdit = {},
+            onShowDeletePrompt = {},
+            onGoToChooseNextWord = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
+    }
 }

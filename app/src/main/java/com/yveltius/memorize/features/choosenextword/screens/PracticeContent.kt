@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -258,14 +258,14 @@ private fun GoNextButton(
     Box(
         modifier = modifier
     ) {
-        FilledTonalIconButton(
+        FilledIconButton(
             onClick = onGoNext,
             modifier = Modifier
-                .size(48.dp)
+                .size(64.dp)
                 .align(alignment = Alignment.CenterEnd)
         ) {
             Icon(
-                painter = painterResource(R.drawable.outline_arrow_back_24),
+                painter = painterResource(R.drawable.icon_arrow_left),
                 contentDescription = null,
                 modifier = Modifier.rotate(180.0f)
             )
@@ -281,14 +281,14 @@ private fun GoToResultsButton(
     Box(
         modifier = modifier
     ) {
-        FilledTonalIconButton(
+        FilledIconButton(
             onClick = onGoToResults,
             modifier = Modifier
-                .size(48.dp)
+                .size(64.dp)
                 .align(alignment = Alignment.CenterEnd)
         ) {
             Icon(
-                painter = painterResource(R.drawable.icon_results),
+                painter = painterResource(R.drawable.icon_check_results),
                 contentDescription = stringResource(R.string.content_description_see_results),
             )
         }

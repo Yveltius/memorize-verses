@@ -17,7 +17,7 @@ fun BackButton(
         onClick = onBackPress
     ) {
         Icon(
-            painter = painterResource(R.drawable.outline_arrow_back_24),
+            painter = painterResource(R.drawable.icon_arrow_left),
             contentDescription = stringResource(R.string.content_description_back_arrow)
         )
     }
