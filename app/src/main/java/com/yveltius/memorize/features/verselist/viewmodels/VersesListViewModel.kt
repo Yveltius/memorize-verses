@@ -3,8 +3,8 @@ package com.yveltius.memorize.features.verselist.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yveltius.versememorization.data.versesearch.VerseSearch
-import com.yveltius.versememorization.data.versesearch.VerseSearchCategory
-import com.yveltius.versememorization.data.versesearch.VerseSearchResult
+import com.yveltius.versememorization.entity.versesearch.VerseSearchCategory
+import com.yveltius.versememorization.entity.versesearch.VerseSearchResult
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.domain.verses.RemoveVersesUseCase
 import com.yveltius.versememorization.entity.verses.Verse
@@ -29,7 +29,7 @@ class VersesListViewModel : ViewModel() {
             getVersesUseCase.getVerses()
                 .onSuccess { verses ->
                     _uiState.update {
-                        it.copy(verses = verses)
+                        it.copy(verses = verses.toList())
                     }
                 }
                 .onFailure {
@@ -41,9 +41,7 @@ class VersesListViewModel : ViewModel() {
     fun removeVerse(verse: Verse) {
         viewModelScope.launch {
             removeVersesUseCase.removeVerse(verse)
-                .onSuccess {
-                    getVerses()
-                }
+                .onSuccess { getVerses() }
                 .onFailure {
                     // todo display removal error
                 }

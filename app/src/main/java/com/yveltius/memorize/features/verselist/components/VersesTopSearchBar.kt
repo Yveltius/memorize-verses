@@ -42,8 +42,8 @@ import androidx.compose.ui.unit.dp
 import com.yveltius.memorize.R
 import com.yveltius.memorize.features.verselist.iconResId
 import com.yveltius.memorize.ui.theme.AppTheme
-import com.yveltius.versememorization.data.versesearch.VerseSearchCategory
-import com.yveltius.versememorization.data.versesearch.VerseSearchResult
+import com.yveltius.versememorization.entity.versesearch.VerseSearchCategory
+import com.yveltius.versememorization.entity.versesearch.VerseSearchResult
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import kotlinx.coroutines.launch

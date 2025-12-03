@@ -1,7 +1,7 @@
 package com.yveltius.memorize.features.verselist
 
 import com.yveltius.memorize.R
-import com.yveltius.versememorization.data.versesearch.VerseSearchCategory
+import com.yveltius.versememorization.entity.versesearch.VerseSearchCategory
 
 val VerseSearchCategory.iconResId: Int
     get() = when (this) {

@@ -1,4 +1,4 @@
-package com.yveltius.versememorization.data.versesearch
+package com.yveltius.versememorization.entity.versesearch
 
 import com.yveltius.versememorization.entity.verses.Verse
 

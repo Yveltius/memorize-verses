@@ -1,6 +1,8 @@
 package com.yveltius.versememorization.data.versesearch
 
 import com.yveltius.versememorization.entity.verses.Verse
+import com.yveltius.versememorization.entity.versesearch.VerseSearchCategory
+import com.yveltius.versememorization.entity.versesearch.VerseSearchResult
 
 class VerseSearch {
     fun getSearchResults(

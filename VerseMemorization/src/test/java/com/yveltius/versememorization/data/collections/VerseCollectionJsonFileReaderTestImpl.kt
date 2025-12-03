@@ -1,101 +1,14 @@
-package com.yveltius.versememorization.data.versesearch
+package com.yveltius.versememorization.data.collections
 
+import com.yveltius.versememorization.data.util.JsonFileReader
+import com.yveltius.versememorization.entity.collections.InternalVerseCollectionForFile
+import com.yveltius.versememorization.entity.util.fromJsonString
+import com.yveltius.versememorization.entity.util.toJsonString
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
-import com.yveltius.versememorization.entity.versesearch.VerseSearchCategory
-import com.yveltius.versememorization.entity.versesearch.VerseSearchResult
-import kotlin.test.Test
-import kotlin.test.assertTrue
 
-class VerseSearchTest {
-    @Test
-    fun `empty string returns an empty list of results`() {
-        VerseSearchCategory.entries.forEach {
-            doTestWithGivenParameters(
-                query = "",
-                category = it,
-                verses = verses,
-                expected = listOf()
-            )
-        }
-    }
-
-    @Test
-    fun `query matches no books, returns empty list`() {
-        doTestWithGivenParameters(
-            query = "blah blah blah blah",
-            category = VerseSearchCategory.Book,
-            verses = verses,
-            expected = listOf()
-        )
-    }
-
-    @Test
-    fun `query matches no text, returns empty list`() {
-        doTestWithGivenParameters(
-            query = "blah blah blah blah",
-            category = VerseSearchCategory.Text,
-            verses = verses,
-            expected = listOf()
-        )
-    }
-
-    @Test
-    fun `query matches no tag, returns empty list`() {
-        doTestWithGivenParameters(
-            query = "blah blah blah blah",
-            category = VerseSearchCategory.Tag,
-            verses = verses,
-            expected = listOf()
-        )
-    }
-
-    @Test
-    fun `query of john returns 3 books`() {
-        doTestWithGivenParameters(
-            query = "john",
-            category = VerseSearchCategory.Book,
-            verses = verses,
-            expected = listOf(john1, firstJohn2, firstJohn3).map { VerseSearchResult(it) }
-        )
-    }
-
-    @Test
-    fun `query of john returns 1 text`() {
-        doTestWithGivenParameters(
-            query = "john",
-            category = VerseSearchCategory.Text,
-            verses = verses,
-            expected = listOf(john1).map { VerseSearchResult(it) }
-        )
-    }
-    
-    @Test
-    fun `query be stead returns 1 verse for the tag category`() {
-        doTestWithGivenParameters(
-            query = "be stead",
-            category = VerseSearchCategory.Tag,
-            verses = verses,
-            expected = listOf(hebrews12).map { VerseSearchResult(it) }
-        )
-    }
-
-    private fun doTestWithGivenParameters(
-        query: String,
-        category: VerseSearchCategory,
-        verses: List<Verse>,
-        expected: List<VerseSearchResult>
-    ) {
-        val actual =
-            VerseSearch().getSearchResults(query = query, category = category, verses = verses)
-
-        assertTrue(message = "Expected: $expected,\nActual: $actual") {
-            actual.size == expected.size
-                    && expected.containsAll(actual)
-                    && actual.containsAll(expected)
-        }
-    }
-
+class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
+    // region Test Verses
     private val john1: Verse = Verse(
         book = "John",
         chapter = 1,
@@ -235,17 +148,34 @@ class VerseSearchTest {
         ),
         tags = listOf("Discipleship Verse", "The Word")
     )
+    // endregion
 
-    private val verses: List<Verse> =
-        listOf(
-            john1,
-            hebrews12,
-            romans12,
-            romans12Extended,
-            firstJohn2,
-            firstJohn3,
-            secondCorinthians5,
-            deuteronomy6,
-            joshua1
+    private var collections: List<InternalVerseCollectionForFile> = listOf(
+        InternalVerseCollectionForFile(
+            name = "Obedience to Christ",
+            verseUuids = setOf(
+                romans12.uuid, romans12Extended.uuid
+            )
+        ),
+        InternalVerseCollectionForFile(
+            name = "The Word",
+            verseUuids = setOf(joshua1.uuid)
+        ),
+        InternalVerseCollectionForFile(
+            name = "Be Steadfast",
+            verseUuids = setOf(hebrews12.uuid)
         )
+    )
+
+    override suspend fun readFromJsonFile(fileName: String): Result<String> {
+        return Result.success(collections.toJsonString())
+    }
+
+    override suspend fun writeToJsonFile(fileName: String, content: String): Result<Unit> {
+        collections = content.fromJsonString()
+
+        return Result.success(Unit)
+    }
+
+
 }
