@@ -38,6 +38,12 @@ class VersesListViewModel : ViewModel() {
         }
     }
 
+    fun getCollections() {
+        viewModelScope.launch {
+
+        }
+    }
+
     fun removeVerse(verse: Verse) {
         viewModelScope.launch {
             removeVersesUseCase.removeVerse(verse)

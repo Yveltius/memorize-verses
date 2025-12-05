@@ -6,6 +6,7 @@ import com.yveltius.versememorization.entity.util.fromJsonString
 import com.yveltius.versememorization.entity.util.toJsonString
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
+import java.util.UUID
 
 class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
     // region Test Verses
@@ -30,7 +31,8 @@ class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
                 text = "For consider Him who has endured such hostility by sinners against Himself, so that you will not grow weary, fainting in heart."
             )
         ),
-        tags = listOf("Be Steadfast", "Discipleship Verse")
+        tags = listOf("Be Steadfast", "Discipleship Verse"),
+        uuid = UUID.fromString("8da5284b-d7b5-457d-b37c-d81c1aa1df37")
     )
 
     private val romans12: Verse = Verse(
@@ -42,7 +44,8 @@ class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
                 text = "And do not be conformed to this world, but be transformed by the renewing of your mind, so that you may approve what the will of God is, that which is good and pleasing and perfect."
             )
         ),
-        tags = listOf("Discipleship Verse", "Separate from the World")
+        tags = listOf("Discipleship Verse", "Separate from the World"),
+        uuid = UUID.fromString("f7c9d471-a785-45db-9357-1d660999a2ad")
     )
 
     private val romans12Extended: Verse = Verse(
@@ -58,7 +61,8 @@ class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
                 text = "And do not be conformed to this world, but be transformed by the renewing of your mind, so that you may approve what the will of God is, that which is good and pleasing and perfect."
             )
         ),
-        tags = listOf("Discipleship Verse", "Obedience to Christ")
+        tags = listOf("Discipleship Verse", "Obedience to Christ"),
+        uuid = UUID.fromString("5719e5ca-28bb-4761-b4b9-fe624181194f")
     )
 
     private val firstJohn2: Verse = Verse(
@@ -74,7 +78,8 @@ class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
                 text = "For all that is in the world, the lust of the flesh and the lust of the eyes and the boastful pride of life, is not from the Father, but is from the world."
             )
         ),
-        tags = listOf("Discipleship Verse", "Separate from the World")
+        tags = listOf("Discipleship Verse", "Separate from the World"),
+        uuid = UUID.fromString("4972009f-0061-4ae2-abe9-db223beab612")
     )
 
     private val firstJohn3: Verse = Verse(
@@ -86,7 +91,8 @@ class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
                 text = "Little children, let us not love with word or with tongue, but in deed and truth."
             )
         ),
-        tags = listOf("Discipleship Verse", "Love")
+        tags = listOf("Discipleship Verse", "Love"),
+        uuid = UUID.fromString("b29d3ff7-62b6-4d87-9ae5-ebb8d71a7815")
     )
 
     private val secondCorinthians5: Verse = Verse(
@@ -98,7 +104,8 @@ class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
                 text = "Therefore if anyone is in Christ, he is a new creation; the old things passed away; behold, new things have come."
             )
         ),
-        tags = listOf("Discipleship Verse", "Obedience to Christ")
+        tags = listOf("Discipleship Verse", "Obedience to Christ"),
+        uuid = UUID.fromString("14364d7c-d881-43e1-97f8-7598373315d6")
     )
 
     private val deuteronomy6: Verse = Verse(
@@ -130,7 +137,8 @@ class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
                 text = "You shall write them on the doorposts of your house and on your gates."
             ),
         ),
-        tags = listOf("Discipleship Verse", "Obedience to Christ")
+        tags = listOf("Discipleship Verse", "Obedience to Christ"),
+        uuid = UUID.fromString("69002cfe-1f5c-4614-b912-4c6913e60162")
     )
 
     private val joshua1: Verse = Verse(
@@ -146,7 +154,8 @@ class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
                 text = "Have I not commanded you? Be strong and courageous! Do not be in dread or be dismayed, for Yahweh your God is with you wherever you go."
             )
         ),
-        tags = listOf("Discipleship Verse", "The Word")
+        tags = listOf("Discipleship Verse", "The Word"),
+        uuid = UUID.fromString("4bf7418b-e76f-4808-8b06-fa57ab307474")
     )
     // endregion
 
@@ -163,6 +172,10 @@ class VerseCollectionJsonFileReaderTestImpl: JsonFileReader {
         ),
         InternalVerseCollectionForFile(
             name = "Be Steadfast",
+            verseUuids = setOf(hebrews12.uuid)
+        ),
+        InternalVerseCollectionForFile(
+            name = "Test for Multiple",
             verseUuids = setOf(hebrews12.uuid)
         )
     )

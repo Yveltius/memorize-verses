@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -22,6 +22,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,7 +30,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -51,10 +52,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yveltius.memorize.R
 import com.yveltius.memorize.features.verselist.components.VersesTopSearchBar
 import com.yveltius.memorize.features.verselist.viewmodels.VersesListViewModel
+import com.yveltius.memorize.ui.components.SectionHeader
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
+import com.yveltius.versememorization.entity.collections.VerseCollection
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -70,6 +74,7 @@ fun VerseListScreen(
     LaunchedEffect(Unit) {
         // having this here means the verses will be fetched again when returning from add/edit
         versesListViewModel.getVerses()
+        versesListViewModel.getCollections()
     }
 
     // todo the way I did this screen isn't quite right, need to abstract correctly
@@ -137,7 +142,6 @@ private fun RootView(
                 onGoToChooseNextWord = onGoToChooseNextWord,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
             )
 
             if (showDeletePrompt) {
@@ -155,26 +159,6 @@ private fun RootView(
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun VerseListTopBar(
-    onGoToSettings: () -> Unit
-) {
-    TopAppBar(
-        title = { Text(text = stringResource(R.string.top_bar_title_verses_list)) },
-        actions = {
-            IconButton(
-                onClick = onGoToSettings
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.icon_settings),
-                    contentDescription = stringResource(R.string.content_description_settings)
-                )
-            }
-        }
-    )
 }
 
 @Composable
@@ -253,10 +237,15 @@ private fun Content(
         LazyColumn(
             modifier = modifier,
             contentPadding = contentPadding,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
             state = lazyListState
         ) {
-            items(verses) { verse ->
+            item {
+                SectionHeader(
+                    text = stringResource(R.string.verses_list_verses_section_header),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            itemsIndexed(verses) { index, verse ->
                 VerseView(
                     verse = verse,
                     onEdit = onEdit,
@@ -264,6 +253,10 @@ private fun Content(
                     onGoToChooseNextWord = onGoToChooseNextWord,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                if (index < (verses.size - 1)) {
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth())
+                }
             }
         }
     }
@@ -279,19 +272,21 @@ private fun VerseView(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(value = false) }
-    Card(
-        modifier = modifier.clickable(onClick = { onGoToChooseNextWord(verse) })
+
+    Row(
+        modifier = modifier.clickable(onClick = { onGoToChooseNextWord(verse) }),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+                .weight(1f)
+                .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 8.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -300,6 +295,7 @@ private fun VerseView(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
+                // TODO this functionality needs to be in the Verse Details Screen
                 IconButton(
                     onClick = {
                         expanded = !expanded
@@ -322,18 +318,24 @@ private fun VerseView(
             }
             Text(
                 text = buildAnnotatedVerse(verseNumberAndTexts = verse.verseText),
-                modifier = Modifier.padding(horizontal = 8.dp)
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = if (verse.tags.isNotEmpty()) verse.tags.toString() else "No Tags"/*verse.getFormattedTags()*/,
+                text = if (verse.tags.isNotEmpty()) verse.tags.toString() else "No Tags",
                 modifier = Modifier
-                    .fillMaxWidth(0.75f)
-                    .align(Alignment.End),
+                    .fillMaxWidth(),
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
-                textAlign = TextAlign.End
+                color = MaterialTheme.colorScheme.primary
             )
         }
+
+        Icon(
+            painter = painterResource(R.drawable.icon_arrow_right),
+            contentDescription = null,
+            modifier = Modifier.padding(top = 16.dp, bottom = 16.dp, end = 16.dp)
+        )
     }
 }
 
@@ -381,6 +383,36 @@ private fun VerseDropdownMenu(
     }
 }
 
+@Composable
+private fun CollectionView(
+    verseCollection: VerseCollection,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(text = verseCollection.name)
+
+            Text(
+                text = pluralStringResource(
+                    id = R.plurals.verses_in_collection,
+                    count = verseCollection.verses.size,
+                    verseCollection.verses.size
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(48.dp),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
 private val verseForPreviews = Verse(
     book = "Romans",
     chapter = 12,
@@ -423,6 +455,38 @@ private fun VerseViewPreviewDark() {
             onEdit = {},
             onShowDeletePrompt = {},
             onGoToChooseNextWord = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Composable
+private fun CollectionViewDark() {
+    AppTheme {
+        CollectionView(
+            verseCollection = VerseCollection(
+                name = "My Collection",
+                verses = setOf(verseForPreviews, verseForPreviews.copy(uuid = UUID.randomUUID())),
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Composable
+private fun CollectionViewDarkWithALotOfVerses() {
+    AppTheme {
+        CollectionView(
+            verseCollection = VerseCollection(
+                name = "My Collection",
+                verses = List(size = 100) { index -> verseForPreviews.copy(uuid = UUID.randomUUID()) }.toSet(),
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)

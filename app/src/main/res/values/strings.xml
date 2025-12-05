@@ -38,6 +38,12 @@
     <string name="top_bar_title_verses_list">Verses</string>
     <string name="top_bar_search_placeholder">Search</string>
     <string name="search_no_results">No Results</string>
+    <string name="verses_list_verses_section_header">Verses</string>
+    <plurals name="verses_in_collection">
+        <item quantity="zero">No Verses</item>
+        <item quantity="one">%d Verse</item>
+        <item quantity="other">%d Verses</item>
+    </plurals>
 
     <!-- Add Verse Screen -->
     <string name="dialog_confirm_exit_without_saving_title">Exit without Saving</string>

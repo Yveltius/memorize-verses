@@ -4,7 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -13,7 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExpandedFullScreenSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yveltius.memorize.R
 import com.yveltius.memorize.features.verselist.iconResId
+import com.yveltius.memorize.ui.components.SectionHeader
 import com.yveltius.memorize.ui.theme.AppTheme
 import com.yveltius.versememorization.entity.versesearch.VerseSearchCategory
 import com.yveltius.versememorization.entity.versesearch.VerseSearchResult
@@ -121,6 +123,8 @@ fun VersesTopSearchBar(
                 .verticalScroll(rememberScrollState())
         ) {
             searchResults.forEach { (category, categoryResults) ->
+                Spacer(modifier = Modifier.fillMaxWidth().height(16.dp))
+
                 SearchResultCategory(
                     query = query,
                     category = category,
@@ -135,9 +139,10 @@ fun VersesTopSearchBar(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
                 )
             }
+
+            Spacer(modifier = Modifier.fillMaxWidth().height(16.dp))
         }
     }
 }
@@ -154,12 +159,8 @@ private fun SearchResultCategory(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        SearchResultCategoryHeader(
-            category = category,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        )
+        SectionHeader(text = category.name, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+
         if (categoryResults.isNotEmpty()) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -171,29 +172,13 @@ private fun SearchResultCategory(
                         searchResult = searchResult,
                         onSearchResultSelected = onSearchResultSelected,
                         category = category,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     )
                 }
             }
         } else {
-            Text(text = stringResource(R.string.search_no_results))
+            Text(text = stringResource(R.string.search_no_results), modifier = Modifier.padding(horizontal = 16.dp))
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun SearchResultCategoryHeader(
-    category: VerseSearchCategory,
-    modifier: Modifier = Modifier
-) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Text(text = category.name, style = MaterialTheme.typography.titleLargeEmphasized)
-        HorizontalDivider(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 16.dp)
-        )
     }
 }
 
