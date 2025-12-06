@@ -3,10 +3,12 @@ package com.yveltius.memorize.features.verselist.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yveltius.versememorization.data.versesearch.VerseSearch
+import com.yveltius.versememorization.domain.collections.VerseCollectionsUseCase
 import com.yveltius.versememorization.entity.versesearch.VerseSearchCategory
 import com.yveltius.versememorization.entity.versesearch.VerseSearchResult
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.domain.verses.RemoveVersesUseCase
+import com.yveltius.versememorization.entity.collections.VerseCollection
 import com.yveltius.versememorization.entity.verses.Verse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +22,7 @@ class VersesListViewModel : ViewModel() {
     private val removeVersesUseCase: RemoveVersesUseCase by inject(
         RemoveVersesUseCase::class.java
     )
+    private val verseCollectionsUseCase: VerseCollectionsUseCase by inject(VerseCollectionsUseCase::class.java)
 
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(value = UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -40,7 +43,13 @@ class VersesListViewModel : ViewModel() {
 
     fun getCollections() {
         viewModelScope.launch {
-
+            verseCollectionsUseCase.getAllCollections()
+                .onSuccess { collections ->
+                    _uiState.update {
+                        it.copy(collections = collections.toList())
+                    }
+                }
+                .onFailure { throwable ->  }
         }
     }
 
@@ -51,6 +60,15 @@ class VersesListViewModel : ViewModel() {
                 .onFailure {
                     // todo display removal error
                 }
+        }
+    }
+
+    fun onAddCollection(newCollectionName: String) {
+        viewModelScope.launch {
+            verseCollectionsUseCase.addCollection(newCollectionName)
+                .onSuccess {
+                    getCollections()
+                }.onFailure { throwable ->  }
         }
     }
 
@@ -66,7 +84,10 @@ class VersesListViewModel : ViewModel() {
         val verseSearch = VerseSearch()
         val map = buildMap(capacity = VerseSearchCategory.entries.size) {
             VerseSearchCategory.entries.forEach { category ->
-                this.put(category, verseSearch.getSearchResults(query, category, verses = uiState.value.verses))
+                this.put(
+                    category,
+                    verseSearch.getSearchResults(query, category, verses = uiState.value.verses)
+                )
             }
         }
 
@@ -78,7 +99,8 @@ class VersesListViewModel : ViewModel() {
     }
 
     data class UiState(
-        val verses: List<Verse> = listOf(),
+        val verses: List<Verse> = emptyList(),
+        val collections: List<VerseCollection> = emptyList(),
         val query: String = "",
         val searchResults: Map<VerseSearchCategory, List<VerseSearchResult>> = VerseSearchCategory.entries.associateWith { emptyList() }
     )

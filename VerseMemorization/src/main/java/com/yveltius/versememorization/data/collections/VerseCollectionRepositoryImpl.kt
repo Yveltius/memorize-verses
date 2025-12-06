@@ -68,6 +68,12 @@ internal class VerseCollectionRepositoryImpl(
         }
     }
 
+    override suspend fun addCollection(newCollectionName: String): Result<Unit> {
+        val newCollection = VerseCollection(name = newCollectionName, verses = setOf())
+
+        return addCollection(newCollection)
+    }
+
     override suspend fun deleteCollection(collection: VerseCollection): Result<Unit> {
         return doWork(
             failureMessage = "Failed to delete VerseCollection($collection)."
@@ -91,7 +97,28 @@ internal class VerseCollectionRepositoryImpl(
         return doWork(
             failureMessage = "Failed to add Verse($verse) to VerseCollection($collectionName)."
         ) {
+            val allCollections = getAllCollections().getOrThrow()
 
+            val collectionToUpdate = allCollections.find { it.name.equals(collectionName, ignoreCase = true) }!!
+            val updatedCollection = VerseCollection(
+                name = collectionToUpdate.name,
+                verses = collectionToUpdate.verses + verse
+            )
+
+            val allCollectionsWithUpdatedCollection = allCollections.map {
+                if (it.name.equals(collectionToUpdate.name, ignoreCase = true)) {
+                    updatedCollection
+                } else {
+                    it
+                }
+            }.toSet()
+
+            writeCollectionsToFile(collections = allCollectionsWithUpdatedCollection).getOrThrow()
+
+            log.debug(
+                tag = logTag,
+                message = "Successfully updated VerseCollection($collectionName) with Verse(${verse.getVerseString()})."
+            )
         }
     }
 

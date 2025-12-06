@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AppBarWithSearch
 import androidx.compose.material3.ExpandedFullScreenSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -22,7 +23,6 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SearchBarScrollBehavior
 import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopSearchBar
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,7 +58,8 @@ fun VersesTopSearchBar(
     searchResults: Map<VerseSearchCategory, List<VerseSearchResult>>,
     scrollBehavior: SearchBarScrollBehavior,
     allVerses: List<Verse>,
-    lazyListState: LazyListState
+    lazyListState: LazyListState,
+    onGoToSettings: () -> Unit
 ) {
     val textFieldState = remember(query) {
         TextFieldState(initialText = query)
@@ -69,6 +70,7 @@ fun VersesTopSearchBar(
             onQueryChanged(textFieldState.text.toString())
         }
     }
+
     val searchBarState = rememberSearchBarState()
     val coroutineScope = rememberCoroutineScope()
     val inputField = @Composable {
@@ -103,46 +105,56 @@ fun VersesTopSearchBar(
                         )
                     }
                 }
-            }
+            },
         )
     }
 
-    TopSearchBar(
+    AppBarWithSearch(
         state = searchBarState,
         inputField = inputField,
         scrollBehavior = scrollBehavior,
+        actions = {
+            IconButton(onClick = onGoToSettings) {
+                Icon(painterResource(R.drawable.icon_settings), contentDescription = stringResource(R.string.content_description_settings))
+            }
+        }
     )
 
-    ExpandedFullScreenSearchBar(
-        state = searchBarState,
-        inputField = inputField,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+    if (searchBarState.currentValue != SearchBarValue.Collapsed) {
+        ExpandedFullScreenSearchBar(
+            state = searchBarState,
+            inputField = inputField,
         ) {
-            searchResults.forEach { (category, categoryResults) ->
-                Spacer(modifier = Modifier.fillMaxWidth().height(16.dp))
-
-                SearchResultCategory(
-                    query = query,
-                    category = category,
-                    categoryResults = categoryResults,
-                    onSearchResultSelected = {
-                        coroutineScope.launch {
-                            searchBarState.animateToCollapsed()
-                            lazyListState.animateScrollToItem(
-                                index = allVerses.indexOf(it.verse)
-                            )
-                        }
-                    },
-                    modifier = Modifier
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                searchResults.forEach { (category, categoryResults) ->
+                    Spacer(modifier = Modifier
                         .fillMaxWidth()
-                )
-            }
+                        .height(16.dp))
 
-            Spacer(modifier = Modifier.fillMaxWidth().height(16.dp))
+                    SearchResultCategory(
+                        query = query,
+                        category = category,
+                        categoryResults = categoryResults,
+                        onSearchResultSelected = {
+                            coroutineScope.launch {
+                                searchBarState.animateToCollapsed()
+                                lazyListState.animateScrollToItem(
+                                    index = allVerses.indexOf(it.verse)
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(16.dp))
+            }
         }
     }
 }
@@ -159,7 +171,12 @@ private fun SearchResultCategory(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        SectionHeader(text = category.name, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+        SectionHeader(
+            text = category.name,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        )
 
         if (categoryResults.isNotEmpty()) {
             Column(
@@ -172,12 +189,17 @@ private fun SearchResultCategory(
                         searchResult = searchResult,
                         onSearchResultSelected = onSearchResultSelected,
                         category = category,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
                     )
                 }
             }
         } else {
-            Text(text = stringResource(R.string.search_no_results), modifier = Modifier.padding(horizontal = 16.dp))
+            Text(
+                text = stringResource(R.string.search_no_results),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
         }
     }
 }
@@ -316,7 +338,8 @@ private fun annotateStringWithQuery(
 ): AnnotatedString {
     return buildAnnotatedString {
         val queryIndices = string.indexesOf(query, ignoreCase = true)
-        val boldIndices = queryIndices.map { List(size = query.length) { index -> it + index} }.flatten()
+        val boldIndices =
+            queryIndices.map { List(size = query.length) { index -> it + index } }.flatten()
 
         string.forEachIndexed { index, char ->
             if (index in boldIndices) {

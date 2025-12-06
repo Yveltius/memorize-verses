@@ -19,7 +19,15 @@ class VerseCollectionsUseCase internal constructor(
         return verseCollectionRepository.addCollection(newCollection)
     }
 
+    suspend fun addCollection(newCollectionName: String): Result<Unit> {
+        return verseCollectionRepository.addCollection(newCollectionName)
+    }
+
     suspend fun deleteCollection(collection: VerseCollection): Result<Unit> {
         return verseCollectionRepository.deleteCollection(collection)
+    }
+
+    suspend fun addVerseToCollection(collectionName: String, verse: Verse): Result<Unit> {
+        return verseCollectionRepository.addVerseToCollection(collectionName, verse)
     }
 }

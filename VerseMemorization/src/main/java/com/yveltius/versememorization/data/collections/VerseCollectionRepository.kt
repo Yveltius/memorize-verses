@@ -10,6 +10,8 @@ internal interface VerseCollectionRepository {
 
     suspend fun addCollection(newCollection: VerseCollection): Result<Unit>
 
+    suspend fun addCollection(newCollectionName: String): Result<Unit>
+
     suspend fun deleteCollection(collection: VerseCollection): Result<Unit>
 
     suspend fun addVerseToCollection(collectionName: String, verse: Verse): Result<Unit>

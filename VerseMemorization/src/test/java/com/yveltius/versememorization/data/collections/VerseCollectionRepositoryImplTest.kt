@@ -318,7 +318,45 @@ class VerseCollectionRepositoryImplTest {
 
         assertTrue(message = "Adding a verse that is already in a collection should be OK.") {
             runBlocking {
-                collectionRepository.addVerseToCollection(collectionName = collectionContainingVerse.name, verse = verseToAdd).getOrThrow()
+                collectionRepository
+                    .addVerseToCollection(
+                        collectionName = collectionContainingVerse.name,
+                        verse = verseToAdd
+                    )
+                    .getOrNull() != null
+            }
+        }
+    }
+
+    @Test
+    fun `verse added to a collection is in collection when getting all after`() {
+        val collectionRepository: VerseCollectionRepository by inject(VerseCollectionRepository::class.java)
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        val collectionToAddTo = runBlocking {
+            collectionRepository.getAllCollections().getOrThrow()
+        }.first()
+
+        val verseToAdd = runBlocking {
+            verseRepository
+                .getVerses()
+                .getOrThrow()
+                .first { verse -> collectionToAddTo.verses.none { it.uuid == verse.uuid } }
+        }
+
+        assertTrue(message = "Adding a verse that is already in a collection should be OK.") {
+            runBlocking {
+                collectionRepository.addVerseToCollection(
+                    collectionName = collectionToAddTo.name,
+                    verse = verseToAdd
+                ).getOrThrow()
+
+                val postAddCollection = collectionRepository
+                    .getAllCollections()
+                    .getOrThrow()
+                    .first { it.name.equals(collectionToAddTo.name, ignoreCase = true) }
+
+                postAddCollection.verses.contains(verseToAdd)
             }
         }
     }

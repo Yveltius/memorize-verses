@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.koin.core)
     implementation(libs.koin.core.coroutines)
     implementation(libs.koin.androidx.compose)
+    implementation(libs.material3)
 
     // Koin Test features
     testImplementation(libs.koin.test)

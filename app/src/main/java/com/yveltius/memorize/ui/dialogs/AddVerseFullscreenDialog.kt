@@ -191,7 +191,7 @@ private fun VerseForm(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row {
-                    Icon(painter = painterResource(R.drawable.outline_add_24), contentDescription = null)
+                    Icon(painter = painterResource(R.drawable.icon_add), contentDescription = null)
                     Text(text = stringResource(R.string.add_verse_text))
                 }
             }
