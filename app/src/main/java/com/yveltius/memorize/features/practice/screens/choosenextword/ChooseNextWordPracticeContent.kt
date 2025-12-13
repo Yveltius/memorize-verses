@@ -1,4 +1,4 @@
-package com.yveltius.memorize.features.choosenextword.screens
+package com.yveltius.memorize.features.practice.screens.choosenextword
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -36,14 +36,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yveltius.memorize.R
-import com.yveltius.memorize.features.choosenextword.viewmodels.ChooseNextWordViewModel
+import com.yveltius.memorize.features.practice.viewmodels.choosenextword.ChooseNextWordViewModel
 import com.yveltius.memorize.ui.theme.errorDark
 import com.yveltius.memorize.ui.theme.errorLight
 import com.yveltius.memorize.ui.theme.onSurfaceDark
 import com.yveltius.memorize.ui.theme.onSurfaceLight
 
 @Composable
-fun PracticeContent(
+fun ChooseNextWordPracticeContent(
     currentGuessCount: Int,
     currentWordsStates: List<ChooseNextWordViewModel.WordGuessState>,
     currentVerse: String?,
@@ -298,7 +298,7 @@ private fun GoToResultsButton(
 @Preview(showBackground = true)
 @Composable
 private fun ScreenPreview() {
-    PracticeContent(
+    ChooseNextWordPracticeContent(
         currentGuessCount = 0,
         currentWordsStates = listOf(),
         currentVerse = "John 1:1",

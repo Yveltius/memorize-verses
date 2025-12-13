@@ -1,15 +1,16 @@
-package com.yveltius.memorize.features.verselist.viewmodels
+package com.yveltius.memorize.features.main.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yveltius.versememorization.data.versesearch.VerseSearch
+import com.yveltius.versememorization.data.search.VerseCollectionSearch
+import com.yveltius.versememorization.data.search.VerseSearch
 import com.yveltius.versememorization.domain.collections.VerseCollectionsUseCase
-import com.yveltius.versememorization.entity.versesearch.VerseSearchCategory
-import com.yveltius.versememorization.entity.versesearch.VerseSearchResult
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.domain.verses.RemoveVersesUseCase
 import com.yveltius.versememorization.entity.collections.VerseCollection
 import com.yveltius.versememorization.entity.verses.Verse
+import com.yveltius.versememorization.entity.versesearch.SearchCategory
+import com.yveltius.versememorization.entity.versesearch.SearchResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 
-class VersesListViewModel : ViewModel() {
+class MainViewModel : ViewModel() {
     private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
     private val removeVersesUseCase: RemoveVersesUseCase by inject(
         RemoveVersesUseCase::class.java
@@ -49,7 +50,7 @@ class VersesListViewModel : ViewModel() {
                         it.copy(collections = collections.toList())
                     }
                 }
-                .onFailure { throwable ->  }
+                .onFailure { throwable -> }
         }
     }
 
@@ -68,7 +69,7 @@ class VersesListViewModel : ViewModel() {
             verseCollectionsUseCase.addCollection(newCollectionName)
                 .onSuccess {
                     getCollections()
-                }.onFailure { throwable ->  }
+                }.onFailure { throwable -> }
         }
     }
 
@@ -82,8 +83,20 @@ class VersesListViewModel : ViewModel() {
 
     private fun generateSearchResults(query: String) {
         val verseSearch = VerseSearch()
-        val map = buildMap(capacity = VerseSearchCategory.entries.size) {
-            VerseSearchCategory.entries.forEach { category ->
+        val verseCollectionSearch = VerseCollectionSearch()
+        val map = buildMap(capacity = SearchCategory.entries.size) {
+            SearchCategory.collectionEntries.forEach { category ->
+                this.put(
+                    category,
+                    verseCollectionSearch.getSearchResults(
+                        query,
+                        category,
+                        verseCollections = uiState.value.collections.toSet()
+                    ).toList()
+                )
+            }
+
+            SearchCategory.verseEntries.forEach { category ->
                 this.put(
                     category,
                     verseSearch.getSearchResults(query, category, verses = uiState.value.verses)
@@ -102,6 +115,6 @@ class VersesListViewModel : ViewModel() {
         val verses: List<Verse> = emptyList(),
         val collections: List<VerseCollection> = emptyList(),
         val query: String = "",
-        val searchResults: Map<VerseSearchCategory, List<VerseSearchResult>> = VerseSearchCategory.entries.associateWith { emptyList() }
+        val searchResults: Map<SearchCategory, List<SearchResult>> = SearchCategory.entries.associateWith { emptyList() }
     )
 }

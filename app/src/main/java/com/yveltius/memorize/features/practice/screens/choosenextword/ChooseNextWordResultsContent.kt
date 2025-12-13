@@ -1,4 +1,4 @@
-package com.yveltius.memorize.features.choosenextword.screens
+package com.yveltius.memorize.features.practice.screens.choosenextword
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,13 +30,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.yveltius.memorize.R
-import com.yveltius.memorize.features.choosenextword.viewmodels.ChooseNextWordViewModel
+import com.yveltius.memorize.features.practice.viewmodels.choosenextword.ChooseNextWordViewModel
 import com.yveltius.memorize.ui.components.VerticalGrid
 import com.yveltius.versememorization.entity.verses.Verse
 import kotlin.math.roundToInt
 
 @Composable
-fun ResultsContent(
+fun ChooseNextWordResultsContent(
     allWordsStates: List<List<ChooseNextWordViewModel.WordGuessState>>,
     guessCounts: List<Int>,
     onComplete: () -> Unit,

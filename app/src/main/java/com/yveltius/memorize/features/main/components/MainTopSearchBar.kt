@@ -1,4 +1,4 @@
-package com.yveltius.memorize.features.verselist.components
+package com.yveltius.memorize.features.main.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
@@ -41,13 +40,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yveltius.memorize.R
-import com.yveltius.memorize.features.verselist.iconResId
+import com.yveltius.memorize.features.main.iconResId
 import com.yveltius.memorize.ui.components.SectionHeader
 import com.yveltius.memorize.ui.theme.AppTheme
-import com.yveltius.versememorization.entity.versesearch.VerseSearchCategory
-import com.yveltius.versememorization.entity.versesearch.VerseSearchResult
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
+import com.yveltius.versememorization.entity.versesearch.SearchResult
+import com.yveltius.versememorization.entity.versesearch.SearchCategory
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,10 +54,9 @@ import kotlinx.coroutines.launch
 fun VersesTopSearchBar(
     query: String,
     onQueryChanged: (String) -> Unit,
-    searchResults: Map<VerseSearchCategory, List<VerseSearchResult>>,
+    searchResults: Map<SearchCategory, List<SearchResult>>,
     scrollBehavior: SearchBarScrollBehavior,
-    allVerses: List<Verse>,
-    lazyListState: LazyListState,
+    scrollToItem: (SearchResult) -> Unit,
     onGoToSettings: () -> Unit
 ) {
     val textFieldState = remember(query) {
@@ -115,7 +113,10 @@ fun VersesTopSearchBar(
         scrollBehavior = scrollBehavior,
         actions = {
             IconButton(onClick = onGoToSettings) {
-                Icon(painterResource(R.drawable.icon_settings), contentDescription = stringResource(R.string.content_description_settings))
+                Icon(
+                    painterResource(R.drawable.icon_settings),
+                    contentDescription = stringResource(R.string.content_description_settings)
+                )
             }
         }
     )
@@ -131,29 +132,31 @@ fun VersesTopSearchBar(
                     .verticalScroll(rememberScrollState())
             ) {
                 searchResults.forEach { (category, categoryResults) ->
-                    Spacer(modifier = Modifier
-                        .fillMaxWidth()
-                        .height(16.dp))
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(16.dp)
+                    )
 
                     SearchResultCategory(
                         query = query,
                         category = category,
                         categoryResults = categoryResults,
-                        onSearchResultSelected = {
+                        onSearchResultSelected = { searchResult ->
                             coroutineScope.launch {
                                 searchBarState.animateToCollapsed()
-                                lazyListState.animateScrollToItem(
-                                    index = allVerses.indexOf(it.verse)
-                                )
+                                scrollToItem(searchResult)
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
 
-                Spacer(modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp))
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                )
             }
         }
     }
@@ -162,9 +165,9 @@ fun VersesTopSearchBar(
 @Composable
 private fun SearchResultCategory(
     query: String,
-    category: VerseSearchCategory,
-    categoryResults: List<VerseSearchResult>,
-    onSearchResultSelected: (VerseSearchResult) -> Unit,
+    category: SearchCategory,
+    categoryResults: List<SearchResult>,
+    onSearchResultSelected: (SearchResult) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -207,34 +210,42 @@ private fun SearchResultCategory(
 @Composable
 private fun SearchResultItem(
     query: String,
-    searchResult: VerseSearchResult,
-    category: VerseSearchCategory,
+    searchResult: SearchResult,
+    category: SearchCategory,
     modifier: Modifier = Modifier,
-    onSearchResultSelected: (VerseSearchResult) -> Unit
+    onSearchResultSelected: (SearchResult) -> Unit
 ) {
     when (category) {
-        VerseSearchCategory.Book -> BookSearchResultItem(
+        SearchCategory.Book -> BookSearchResultItem(
             query,
-            searchResult,
+            searchResult as SearchResult.VerseSearchResult,
             category,
             onSearchResultSelected,
             modifier
         )
 
-        VerseSearchCategory.Text -> TextSearchResultItem(
+        SearchCategory.Text -> TextSearchResultItem(
             query,
-            searchResult,
+            searchResult as SearchResult.VerseSearchResult,
             category,
             onSearchResultSelected,
             modifier
         )
 
-        VerseSearchCategory.Tag -> TagSearchResultItem(
+        SearchCategory.Tag -> TagSearchResultItem(
             query,
-            searchResult,
+            searchResult as SearchResult.VerseSearchResult,
             category,
             onSearchResultSelected,
             modifier
+        )
+
+        SearchCategory.Collection -> CollectionSearchResultItem(
+            query = query,
+            searchResult = searchResult as SearchResult.CollectionSearchResult,
+            category = category,
+            onSearchResultSelected = onSearchResultSelected,
+            modifier = modifier
         )
     }
 
@@ -243,9 +254,9 @@ private fun SearchResultItem(
 @Composable
 private fun BookSearchResultItem(
     query: String,
-    searchResult: VerseSearchResult,
-    category: VerseSearchCategory,
-    onSearchResultSelected: (VerseSearchResult) -> Unit,
+    searchResult: SearchResult.VerseSearchResult,
+    category: SearchCategory,
+    onSearchResultSelected: (SearchResult) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -266,9 +277,9 @@ private fun BookSearchResultItem(
 @Composable
 private fun TextSearchResultItem(
     query: String,
-    searchResult: VerseSearchResult,
-    category: VerseSearchCategory,
-    onSearchResultSelected: (VerseSearchResult) -> Unit,
+    searchResult: SearchResult.VerseSearchResult,
+    category: SearchCategory,
+    onSearchResultSelected: (SearchResult) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -302,9 +313,9 @@ private fun TextSearchResultItem(
 @Composable
 private fun TagSearchResultItem(
     query: String,
-    searchResult: VerseSearchResult,
-    category: VerseSearchCategory,
-    onSearchResultSelected: (VerseSearchResult) -> Unit,
+    searchResult: SearchResult.VerseSearchResult,
+    category: SearchCategory,
+    onSearchResultSelected: (SearchResult) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -328,6 +339,28 @@ private fun TagSearchResultItem(
                 modifier = Modifier.padding(start = 16.dp)
             )
         }
+        Icon(painter = painterResource(R.drawable.icon_arrow_right), contentDescription = null)
+    }
+}
+
+@Composable
+private fun CollectionSearchResultItem(
+    query: String,
+    searchResult: SearchResult.CollectionSearchResult,
+    category: SearchCategory,
+    onSearchResultSelected: (SearchResult) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.clickable { onSearchResultSelected(searchResult) },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(painter = painterResource(category.iconResId), contentDescription = null)
+        Text(
+            text = annotateStringWithQuery(query, string = searchResult.verseCollection.name),
+            modifier = Modifier.weight(1f)
+        )
         Icon(painter = painterResource(R.drawable.icon_arrow_right), contentDescription = null)
     }
 }
@@ -398,9 +431,9 @@ private val verseForPreviews = Verse(
 private fun BookSearchResultCategory() {
     SearchResultCategory(
         query = "rom",
-        category = VerseSearchCategory.Book,
+        category = SearchCategory.Book,
         categoryResults = listOf(verseForPreviews, verseForPreviews)
-            .map { VerseSearchResult(it) },
+            .map { SearchResult.VerseSearchResult(it) },
         onSearchResultSelected = {},
         modifier = Modifier
             .fillMaxWidth()
@@ -413,10 +446,10 @@ private fun BookSearchResultCategory() {
 private fun TextSearchResultCategory() {
     SearchResultCategory(
         query = "do not be conformed",
-        category = VerseSearchCategory.Text,
+        category = SearchCategory.Text,
         categoryResults = listOf(
             verseForPreviews, verseForPreviews
-        ).map { VerseSearchResult(it) },
+        ).map { SearchResult.VerseSearchResult(it) },
         onSearchResultSelected = {},
         modifier = Modifier
             .fillMaxWidth()
@@ -429,10 +462,10 @@ private fun TextSearchResultCategory() {
 private fun TagSearchResultCategory() {
     SearchResultCategory(
         query = "ver",
-        category = VerseSearchCategory.Tag,
+        category = SearchCategory.Tag,
         categoryResults = listOf(
             verseForPreviews, verseForPreviews
-        ).map { VerseSearchResult(it) },
+        ).map { SearchResult.VerseSearchResult(it) },
         onSearchResultSelected = {},
         modifier = Modifier
             .fillMaxWidth()
@@ -445,10 +478,10 @@ private fun TagSearchResultCategory() {
 private fun TagSearchResultCategoryRepeatLetter() {
     SearchResultCategory(
         query = "re",
-        category = VerseSearchCategory.Tag,
+        category = SearchCategory.Tag,
         categoryResults = listOf(
             verseForPreviews, verseForPreviews
-        ).map { VerseSearchResult(it) },
+        ).map { SearchResult.VerseSearchResult(it) },
         onSearchResultSelected = {},
         modifier = Modifier
             .fillMaxWidth()
@@ -462,8 +495,8 @@ private fun SearchResultItemPreview() {
     AppTheme {
         SearchResultItem(
             query = "rom",
-            searchResult = VerseSearchResult(verseForPreviews),
-            category = VerseSearchCategory.Book,
+            searchResult = SearchResult.VerseSearchResult(verseForPreviews),
+            category = SearchCategory.Book,
             onSearchResultSelected = {},
             modifier = Modifier.fillMaxWidth(),
         )

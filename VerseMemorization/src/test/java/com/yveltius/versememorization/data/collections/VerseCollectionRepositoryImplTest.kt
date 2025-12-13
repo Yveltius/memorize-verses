@@ -360,4 +360,100 @@ class VerseCollectionRepositoryImplTest {
             }
         }
     }
+
+    @Test
+    fun `throws when calling getCollection with an empty collection name`() {
+        val collectionRepository: VerseCollectionRepository by inject(VerseCollectionRepository::class.java)
+
+        assertThrows(Throwable::class.java) {
+            runBlocking { collectionRepository.getCollection(collectionName = "").getOrThrow() }
+        }
+    }
+
+    @Test
+    fun `returns correct collection when searching by name`() {
+        val collectionRepository: VerseCollectionRepository by inject(VerseCollectionRepository::class.java)
+
+        val expected = runBlocking { collectionRepository.getAllCollections().getOrThrow().first() }
+
+        val actual = runBlocking {
+            collectionRepository.getCollection(collectionName = expected.name).getOrThrow()
+        }
+
+        assertTrue(message = "Expected: $expected\nActual: $actual") {
+            actual == expected
+        }
+    }
+
+    @Test
+    fun `returns correct collection when searching by name regardless of case`() {
+        val collectionRepository: VerseCollectionRepository by inject(VerseCollectionRepository::class.java)
+
+        val expected = runBlocking { collectionRepository.getAllCollections().getOrThrow().first() }
+
+        val actualUpper = runBlocking {
+            collectionRepository.getCollection(collectionName = expected.name.uppercase())
+                .getOrThrow()
+        }
+
+        val actualLower = runBlocking {
+            collectionRepository.getCollection(collectionName = expected.name.lowercase())
+                .getOrThrow()
+        }
+
+        assertTrue(message = "Expected: $expected\nActual: $actualUpper\n\nExpected: $expected\nActual: $actualLower") {
+            actualUpper == expected
+                    && actualLower == expected
+        }
+    }
+
+    @Test
+    fun `throws when empty collection name is given for remove verse from collection`() {
+        val collectionRepository: VerseCollectionRepository by inject(VerseCollectionRepository::class.java)
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        assertThrows(Throwable::class.java) {
+            runBlocking {
+                collectionRepository.removeVerseFromCollection(
+                    collectionName = "",
+                    verse = verseRepository.getVerses().getOrThrow().first()
+                ).getOrThrow()
+            }
+        }
+    }
+
+    @Test
+    fun `correct verse is removed when removing verse from collection`() {
+        val collectionRepository: VerseCollectionRepository by inject(VerseCollectionRepository::class.java)
+        val verseRepository: VerseRepository by inject(VerseRepository::class.java)
+
+        assertTrue(message = "Expected the verse to not appear in the list after removal.") {
+            runBlocking {
+                val verseToAddThenRemove = verseRepository.getVerses().getOrThrow().first()
+                val collection = collectionRepository.getAllCollections().getOrThrow().first()
+                collectionRepository.addVerseToCollection(
+                    collectionName = collection.name,
+                    verse = verseToAddThenRemove
+                ).getOrThrow()
+
+                // verse should be there
+                collectionRepository
+                    .getCollection(collectionName = collection.name)
+                    .getOrThrow().verses.any { it.uuid == verseToAddThenRemove.uuid }
+
+                collectionRepository.removeVerseFromCollection(
+                    collectionName = collection.name,
+                    verse = verseToAddThenRemove
+                ).getOrThrow()
+
+                // verse should no longer be there
+                collectionRepository
+                    .getCollection(collectionName = collection.name)
+                    .getOrThrow().verses.none { it.uuid == verseToAddThenRemove.uuid }
+            }
+        }
+    }
+
+    // todo need a test for a collectionName that doesn't exist for removeVerseFromCollection
+    // also need one for when the collection does not contain verse in the first place
 }

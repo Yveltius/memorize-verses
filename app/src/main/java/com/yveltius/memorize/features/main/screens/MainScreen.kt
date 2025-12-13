@@ -1,4 +1,4 @@
-package com.yveltius.memorize.features.verselist.screens
+package com.yveltius.memorize.features.main.screens
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
@@ -12,16 +12,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButtonMenu
@@ -45,6 +48,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,7 +56,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -62,43 +65,46 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yveltius.memorize.R
-import com.yveltius.memorize.features.verselist.components.VersesTopSearchBar
-import com.yveltius.memorize.features.verselist.viewmodels.VersesListViewModel
+import com.yveltius.memorize.features.main.components.VersesTopSearchBar
+import com.yveltius.memorize.features.main.viewmodels.MainViewModel
 import com.yveltius.memorize.ui.components.SectionHeader
-import com.yveltius.memorize.ui.components.VerticalGrid
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
 import com.yveltius.versememorization.entity.collections.VerseCollection
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
+import com.yveltius.versememorization.entity.versesearch.SearchResult
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 @Composable
-fun VerseListScreen(
+fun MainScreen(
     onAddVerse: () -> Unit,
     onEditVerse: (Verse) -> Unit,
+    onVerseCollectionSelected: (String) -> Unit,
     onGoToChooseNextWord: (Verse) -> Unit,
     onGoToSettings: () -> Unit,
-    versesListViewModel: VersesListViewModel = viewModel()
+    mainViewModel: MainViewModel = viewModel()
 ) {
-    val uiState by versesListViewModel.uiState.collectAsState()
+    val uiState by mainViewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         // having this here means the verses will be fetched again when returning from add/edit
-        versesListViewModel.getVerses()
-        versesListViewModel.getCollections()
+        mainViewModel.getVerses()
+        mainViewModel.getCollections()
     }
-
 
     // todo the way I did this screen isn't quite right, need to abstract correctly
     //  and not directly pass UiState object
     RootView(
         uiState = uiState,
-        onEdit = onEditVerse,
+        onEditVerse = onEditVerse,
         onAddVerse = onAddVerse,
-        onQueryChanged = versesListViewModel::onQueryChanged,
-        onDeleteConfirmed = versesListViewModel::removeVerse,
-        onAddCollection = versesListViewModel::onAddCollection,
+        onQueryChanged = mainViewModel::onQueryChanged,
+        onDeleteConfirmed = mainViewModel::removeVerse,
+        onVerseCollectionSelected = onVerseCollectionSelected,
+        onAddCollection = mainViewModel::onAddCollection,
         onGoToChooseNextWord = onGoToChooseNextWord,
         onGoToSettings = onGoToSettings
     )
@@ -107,10 +113,11 @@ fun VerseListScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RootView(
-    uiState: VersesListViewModel.UiState,
+    uiState: MainViewModel.UiState,
     onAddVerse: () -> Unit,
-    onEdit: (Verse) -> Unit,
+    onEditVerse: (Verse) -> Unit,
     onQueryChanged: (String) -> Unit,
+    onVerseCollectionSelected: (String) -> Unit,
     onAddCollection: (String) -> Unit,
     onDeleteConfirmed: (Verse) -> Unit,
     onGoToChooseNextWord: (Verse) -> Unit,
@@ -124,6 +131,7 @@ private fun RootView(
     var verseToBeDeleted: Verse? by remember { mutableStateOf(value = null) }
 
     val lazyListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     AppTheme {
         Scaffold(
@@ -136,9 +144,31 @@ private fun RootView(
                     onQueryChanged = onQueryChanged,
                     searchResults = uiState.searchResults,
                     scrollBehavior = scrollBehavior,
-                    allVerses = uiState.verses,
-                    lazyListState = lazyListState,
-                    onGoToSettings = onGoToSettings
+                    onGoToSettings = onGoToSettings,
+                    scrollToItem = { searchResult ->
+                        // not sure of the better way to handle this atm
+                        when (searchResult) {
+                            is SearchResult.CollectionSearchResult -> {
+                                coroutineScope.launch {
+                                    lazyListState.animateScrollToItem(
+                                        index = uiState.collections.indexOf(searchResult.verseCollection)
+                                                + 2 // headers and spacers
+                                    )
+                                }
+                            }
+
+                            is SearchResult.VerseSearchResult -> {
+                                coroutineScope.launch {
+                                    // the +2 is for the section headers
+                                    lazyListState.animateScrollToItem(
+                                        index = uiState.collections.size
+                                                + uiState.verses.indexOf(searchResult.verse)
+                                                + 4 // headers and spacers
+                                    )
+                                }
+                            }
+                        }
+                    }
                 )
             },
             floatingActionButton = {
@@ -147,14 +177,15 @@ private fun RootView(
                     onAddVerse = onAddVerse,
                     onAddCollection = { showAddCollectionDialog = true }
                 )
-            }
+            },
         ) { contentPadding ->
             Content(
                 verses = uiState.verses,
                 collections = uiState.collections,
                 contentPadding = contentPadding,
                 lazyListState = lazyListState,
-                onEdit = onEdit,
+                onEditVerse = onEditVerse,
+                onVerseCollectionSelected = onVerseCollectionSelected,
                 onShowDeletePrompt = {
                     verseToBeDeleted = it
                     showDeletePrompt = true
@@ -194,7 +225,7 @@ private fun AddFAB(
     onAddCollection: () -> Unit
 ) {
     val closeIcon = painterResource(R.drawable.icon_x)
-    val addIcon = painterResource(R.drawable.icon_add)
+    val addIcon = painterResource(R.drawable.icon_plus)
 
     val fabVisible by remember {
         derivedStateOf {
@@ -208,7 +239,7 @@ private fun AddFAB(
     BackHandler(expanded) { expanded = false }
 
     FloatingActionButtonMenu(
-        modifier = Modifier,
+        modifier = Modifier.offset(x = 16.dp, y = 16.dp),
         expanded = expanded,
         button = {
             ToggleFloatingActionButton(
@@ -301,6 +332,7 @@ private fun AddCollectionAlertDialog(
     onDismissRequest: () -> Unit,
     onConfirmRequest: (String) -> Unit,
 ) {
+    val focusRequester = remember { FocusRequester() }
     var collectionName by remember { mutableStateOf(value = "") }
 
     Dialog(
@@ -328,7 +360,9 @@ private fun AddCollectionAlertDialog(
                 OutlinedTextField(
                     value = collectionName,
                     onValueChange = { collectionName = it },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester)
                 )
 
                 Spacer(
@@ -359,6 +393,10 @@ private fun AddCollectionAlertDialog(
             }
         }
     }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
 }
 
 @Composable
@@ -367,7 +405,8 @@ private fun Content(
     collections: List<VerseCollection>,
     contentPadding: PaddingValues,
     lazyListState: LazyListState,
-    onEdit: (Verse) -> Unit,
+    onEditVerse: (Verse) -> Unit,
+    onVerseCollectionSelected: (String) -> Unit,
     onShowDeletePrompt: (Verse) -> Unit,
     onGoToChooseNextWord: (Verse) -> Unit,
     modifier: Modifier = Modifier
@@ -378,7 +417,11 @@ private fun Content(
         ) {
             Text(
                 text = stringResource(R.string.verses_list_no_verses_or_collections),
-                modifier = Modifier.align(alignment = Alignment.Center)
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .align(alignment = Alignment.Center)
             )
         }
     } else {
@@ -396,22 +439,23 @@ private fun Content(
             }
             item {
                 SectionHeader(
-                    text = stringResource(R.string.verses_list_collections_section_header),
+                    text = stringResource(R.string.section_header_collections),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
 
             if (collections.isNotEmpty()) {
-                item {
-                    VerticalGrid(
-                        items = collections,
-                        columns = 2,
-                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxWidth().padding(16.dp)
-                    ) { index, collection ->
-                        CollectionView(verseCollection = collection, modifier = Modifier.weight(1f))
-                    }
+                // use a VerticalGrid for larger screens
+                itemsIndexed(
+                    items = collections,
+                    key = { _, collection -> collection.name }) { index, collection ->
+                    CollectionView(
+                        verseCollection = collection,
+                        onVerseCollectionSelected = onVerseCollectionSelected,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
                 }
             } else {
                 item {
@@ -433,7 +477,7 @@ private fun Content(
             }
             item {
                 SectionHeader(
-                    text = stringResource(R.string.verses_list_verses_section_header),
+                    text = stringResource(R.string.section_header_verses),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -444,7 +488,7 @@ private fun Content(
                 ) { index, verse ->
                     VerseView(
                         verse = verse,
-                        onEdit = onEdit,
+                        onEditVerse = onEditVerse,
                         onShowDeletePrompt = onShowDeletePrompt,
                         onGoToChooseNextWord = onGoToChooseNextWord,
                         modifier = Modifier.fillMaxWidth()
@@ -471,7 +515,7 @@ private fun Content(
 @Composable
 private fun VerseView(
     verse: Verse,
-    onEdit: (Verse) -> Unit,
+    onEditVerse: (Verse) -> Unit,
     onShowDeletePrompt: (Verse) -> Unit,
     onGoToChooseNextWord: (Verse) -> Unit,
     modifier: Modifier = Modifier
@@ -486,12 +530,11 @@ private fun VerseView(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
+                .padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -511,7 +554,7 @@ private fun VerseView(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
                         onEdit = {
-                            onEdit(verse)
+                            onEditVerse(verse)
                             expanded = false
                         },
                         onShowDeletePrompt = {
@@ -527,7 +570,7 @@ private fun VerseView(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = if (verse.tags.isNotEmpty()) verse.tags.toString() else "No Tags",
+                text = if (verse.tags.isNotEmpty()) verse.tags.toString() else stringResource(R.string.verses_list_no_tags),
                 modifier = Modifier
                     .fillMaxWidth(),
                 overflow = TextOverflow.Ellipsis,
@@ -588,32 +631,54 @@ private fun VerseDropdownMenu(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun CollectionView(
     verseCollection: VerseCollection,
+    onVerseCollectionSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier
+    ElevatedCard(
+        modifier = modifier,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text(text = verseCollection.name, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                text = verseCollection.name,
+                style = MaterialTheme.typography.headlineSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
 
             Text(
-                text = pluralStringResource(
-                    id = R.plurals.verses_in_collection,
-                    count = verseCollection.verses.size,
-                    verseCollection.verses.size
-                ),
+                text = when (verseCollection.verses.size) {
+                    0 -> stringResource(R.string.verses_list_no_verses_in_collection)
+                    1 -> stringResource(R.string.verses_list_one_verse_in_collection)
+                    else -> stringResource(
+                        R.string.verses_list_multiple_verses_in_collection,
+                        verseCollection.verses.size
+                    )
+                },
+                style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                textAlign = TextAlign.Center
+                    .padding(top = 8.dp, bottom = 16.dp),
             )
+
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(
+                    onClick = { onVerseCollectionSelected(verseCollection.name) },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(text = stringResource(R.string.main_screen_button_collection_view_details))
+                }
+            }
         }
     }
 }
@@ -642,7 +707,7 @@ private val verseForPreviews = Verse(
 private fun VerseViewPreviewLight() {
     VerseView(
         verse = verseForPreviews,
-        onEdit = {},
+        onEditVerse = {},
         onShowDeletePrompt = {},
         onGoToChooseNextWord = {},
         modifier = Modifier
@@ -657,7 +722,7 @@ private fun VerseViewPreviewDark() {
     AppTheme {
         VerseView(
             verse = verseForPreviews,
-            onEdit = {},
+            onEditVerse = {},
             onShowDeletePrompt = {},
             onGoToChooseNextWord = {},
             modifier = Modifier
@@ -676,6 +741,7 @@ private fun CollectionViewDark() {
                 name = "My Collection",
                 verses = setOf(verseForPreviews),
             ),
+            onVerseCollectionSelected = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -692,6 +758,7 @@ private fun CollectionViewDarkWithALotOfVerses() {
                 name = "My Collection",
                 verses = List(size = 100) { index -> verseForPreviews.copy(uuid = UUID.randomUUID()) }.toSet(),
             ),
+            onVerseCollectionSelected = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)

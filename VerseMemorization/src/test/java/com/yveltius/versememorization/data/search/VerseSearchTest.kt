@@ -1,16 +1,17 @@
-package com.yveltius.versememorization.data.versesearch
+package com.yveltius.versememorization.data.search
 
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
-import com.yveltius.versememorization.entity.versesearch.VerseSearchCategory
-import com.yveltius.versememorization.entity.versesearch.VerseSearchResult
+import com.yveltius.versememorization.entity.versesearch.SearchResult
+import com.yveltius.versememorization.entity.versesearch.SearchCategory
+import org.junit.Assert.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class VerseSearchTest {
     @Test
     fun `empty string returns an empty list of results`() {
-        VerseSearchCategory.entries.forEach {
+        SearchCategory.entries.forEach {
             doTestWithGivenParameters(
                 query = "",
                 category = it,
@@ -24,7 +25,7 @@ class VerseSearchTest {
     fun `query matches no books, returns empty list`() {
         doTestWithGivenParameters(
             query = "blah blah blah blah",
-            category = VerseSearchCategory.Book,
+            category = SearchCategory.Book,
             verses = verses,
             expected = listOf()
         )
@@ -34,7 +35,7 @@ class VerseSearchTest {
     fun `query matches no text, returns empty list`() {
         doTestWithGivenParameters(
             query = "blah blah blah blah",
-            category = VerseSearchCategory.Text,
+            category = SearchCategory.Text,
             verses = verses,
             expected = listOf()
         )
@@ -44,7 +45,7 @@ class VerseSearchTest {
     fun `query matches no tag, returns empty list`() {
         doTestWithGivenParameters(
             query = "blah blah blah blah",
-            category = VerseSearchCategory.Tag,
+            category = SearchCategory.Tag,
             verses = verses,
             expected = listOf()
         )
@@ -54,9 +55,9 @@ class VerseSearchTest {
     fun `query of john returns 3 books`() {
         doTestWithGivenParameters(
             query = "john",
-            category = VerseSearchCategory.Book,
+            category = SearchCategory.Book,
             verses = verses,
-            expected = listOf(john1, firstJohn2, firstJohn3).map { VerseSearchResult(it) }
+            expected = listOf(john1, firstJohn2, firstJohn3).map { SearchResult.VerseSearchResult(it) }
         )
     }
 
@@ -64,9 +65,9 @@ class VerseSearchTest {
     fun `query of john returns 1 text`() {
         doTestWithGivenParameters(
             query = "john",
-            category = VerseSearchCategory.Text,
+            category = SearchCategory.Text,
             verses = verses,
-            expected = listOf(john1).map { VerseSearchResult(it) }
+            expected = listOf(john1).map { SearchResult.VerseSearchResult(it) }
         )
     }
     
@@ -74,17 +75,29 @@ class VerseSearchTest {
     fun `query be stead returns 1 verse for the tag category`() {
         doTestWithGivenParameters(
             query = "be stead",
-            category = VerseSearchCategory.Tag,
+            category = SearchCategory.Tag,
             verses = verses,
-            expected = listOf(hebrews12).map { VerseSearchResult(it) }
+            expected = listOf(hebrews12).map { SearchResult.VerseSearchResult(it) }
         )
+    }
+
+    @Test
+    fun `throws when given a non-verse related category`() {
+        assertThrows(Throwable::class.java) {
+            doTestWithGivenParameters(
+                query = "test",
+                category = SearchCategory.Collection,
+                verses = verses,
+                expected = listOf(),
+            )
+        }
     }
 
     private fun doTestWithGivenParameters(
         query: String,
-        category: VerseSearchCategory,
+        category: SearchCategory,
         verses: List<Verse>,
-        expected: List<VerseSearchResult>
+        expected: List<SearchResult.VerseSearchResult>
     ) {
         val actual =
             VerseSearch().getSearchResults(query = query, category = category, verses = verses)

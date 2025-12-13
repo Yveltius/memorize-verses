@@ -29,6 +29,26 @@ internal class VerseCollectionRepositoryImpl(
         }
     }
 
+    override suspend fun getCollection(collectionName: String): Result<VerseCollection> {
+        return doWork(
+            failureMessage = "Failed to get a VerseCollection for [$collectionName]."
+        ) {
+            assert(collectionName.isNotEmpty())
+
+            val allCollections = getAllCollections().getOrThrow()
+
+            val foundCollection =
+                allCollections.first { it.name.equals(collectionName, ignoreCase = true) }
+
+            log.debug(
+                tag = logTag,
+                message = "Found VerseCollection matching name($collectionName)."
+            )
+
+            foundCollection
+        }
+    }
+
     override suspend fun getCollectionsForVerse(verse: Verse): Result<Set<VerseCollection>> {
         return doWork(
             failureMessage = "Failed to get collections containing ${verse.getVerseString()}."
@@ -99,7 +119,8 @@ internal class VerseCollectionRepositoryImpl(
         ) {
             val allCollections = getAllCollections().getOrThrow()
 
-            val collectionToUpdate = allCollections.find { it.name.equals(collectionName, ignoreCase = true) }!!
+            val collectionToUpdate =
+                allCollections.find { it.name.equals(collectionName, ignoreCase = true) }!!
             val updatedCollection = VerseCollection(
                 name = collectionToUpdate.name,
                 verses = collectionToUpdate.verses + verse
@@ -118,6 +139,42 @@ internal class VerseCollectionRepositoryImpl(
             log.debug(
                 tag = logTag,
                 message = "Successfully updated VerseCollection($collectionName) with Verse(${verse.getVerseString()})."
+            )
+        }
+    }
+
+    override suspend fun removeVerseFromCollection(
+        collectionName: String,
+        verse: Verse
+    ): Result<Unit> {
+        return doWork(
+            failureMessage = "Failed to remove Verse(${verse.getVerseString()} from VerseCollection($collectionName)."
+        ) {
+            assert(collectionName.isNotEmpty())
+
+            val allCollections = getAllCollections().getOrThrow()
+
+            val verseCollection = allCollections
+                    .first { it.name.equals(collectionName, ignoreCase = true) }
+
+            val newVerseCollection = VerseCollection(
+                name = verseCollection.name,
+                verses = verseCollection.verses.filter { it.uuid != verse.uuid }.toSet()
+            )
+
+            val newCollections = allCollections.map { collection ->
+                if (collection.name.equals(collectionName, ignoreCase = true)) {
+                    newVerseCollection
+                } else {
+                    collection
+                }
+            }.toSet()
+
+            writeCollectionsToFile(collections = newCollections).getOrThrow()
+
+            log.debug(
+                tag = logTag,
+                message = "Successfully removed Verse(${verse.getVerseString()} from VerseCollection($collectionName)."
             )
         }
     }

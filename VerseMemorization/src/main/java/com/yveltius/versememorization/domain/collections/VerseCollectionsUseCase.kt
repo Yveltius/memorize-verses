@@ -11,6 +11,10 @@ class VerseCollectionsUseCase internal constructor(
         return verseCollectionRepository.getAllCollections()
     }
 
+    suspend fun getCollection(collectionName: String): Result<VerseCollection> {
+        return verseCollectionRepository.getCollection(collectionName)
+    }
+
     suspend fun getCollectionsForVerse(verse: Verse): Result<Set<VerseCollection>> {
         return verseCollectionRepository.getCollectionsForVerse(verse)
     }
@@ -29,5 +33,9 @@ class VerseCollectionsUseCase internal constructor(
 
     suspend fun addVerseToCollection(collectionName: String, verse: Verse): Result<Unit> {
         return verseCollectionRepository.addVerseToCollection(collectionName, verse)
+    }
+
+    suspend fun removeVerseFromCollection(collectionName: String, verse: Verse): Result<Unit> {
+        return verseCollectionRepository.removeVerseFromCollection(collectionName, verse)
     }
 }
