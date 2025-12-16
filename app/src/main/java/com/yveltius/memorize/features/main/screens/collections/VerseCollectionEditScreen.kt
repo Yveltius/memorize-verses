@@ -44,6 +44,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yveltius.memorize.R
 import com.yveltius.memorize.features.main.viewmodels.collections.VerseCollectionEditViewModel
 import com.yveltius.memorize.ui.components.BackButton
+import com.yveltius.memorize.ui.components.FailedToLoad
+import com.yveltius.memorize.ui.components.Loading
 import com.yveltius.memorize.ui.components.SectionHeader
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
@@ -83,8 +85,16 @@ fun VerseCollectionEditScreen(
             )
         }
 
-        VerseCollectionEditViewModel.UiState.FailedToLoadVerseCollection -> {}
-        VerseCollectionEditViewModel.UiState.Loading -> {}
+        VerseCollectionEditViewModel.UiState.FailedToLoadVerseCollection -> {
+            FailedToLoad(
+                retryMessage = stringResource(R.string.edit_collection_failed_to_load_collection, collectionName),
+                onRetry = { verseCollectionEditViewModel.onRetry(collectionName) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        VerseCollectionEditViewModel.UiState.Loading -> {
+            Loading(modifier = Modifier.fillMaxSize())
+        }
     }
 }
 

@@ -12,25 +12,26 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 
-class VerseCollectionEditViewModel: ViewModel() {
+class VerseCollectionEditViewModel : ViewModel() {
     private val verseCollectionsUseCase: VerseCollectionsUseCase by inject(VerseCollectionsUseCase::class.java)
     private val getVersesUseCase: GetVersesUseCase by inject(GetVersesUseCase::class.java)
 
-    private val _uiState: MutableStateFlow<UiState> = MutableStateFlow<UiState>(value = UiState.Loading)
+    private val _uiState: MutableStateFlow<UiState> =
+        MutableStateFlow<UiState>(value = UiState.Loading)
     val uiState = _uiState.asStateFlow()
 
-    private lateinit var allVerses: List<Verse>
+    private var allVerses: List<Verse>? = null
 
     init {
-        getVerses()
+        viewModelScope.launch {
+            getVerses()
+        }
     }
 
-    private fun getVerses() {
-        viewModelScope.launch {
-            getVersesUseCase.getVerses()
-                .onSuccess { verses -> allVerses = verses.toList() }
-                .onFailure { /* Screen won't really work without this... */  }
-        }
+    private suspend fun getVerses() {
+        getVersesUseCase.getVerses()
+            .onSuccess { verses -> allVerses = verses.toList() }
+            .onFailure { _uiState.update { UiState.FailedToLoadVerseCollection } }
     }
 
     fun getVerseCollection(collectionName: String) {
@@ -38,12 +39,14 @@ class VerseCollectionEditViewModel: ViewModel() {
             verseCollectionsUseCase.getCollection(collectionName = collectionName)
                 .onSuccess { verseCollection ->
                     _uiState.update {
-                        UiState.Content(
-                            verseCollection,
-                            versesNotInCollection = allVerses.filter { verseBeingFiltered ->
+                        allVerses?.let { verses ->
+                            UiState.Content(
+                                verseCollection,
+                                versesNotInCollection = verses.filter { verseBeingFiltered ->
                                     verseCollection.verses.none { verseBeingFiltered.uuid == it.uuid }
-                            }
-                        )
+                                }
+                            )
+                        } ?: UiState.FailedToLoadVerseCollection
                     }
                 }.onFailure {
                     _uiState.update {
@@ -51,6 +54,19 @@ class VerseCollectionEditViewModel: ViewModel() {
                     }
                 }
         }
+    }
+
+    fun onRetry(collectionName: String) {
+        if (allVerses == null) {
+            viewModelScope.launch {
+                // getVersesCollection shouldn't run until after getVerses completes
+                getVerses()
+                getVerseCollection(collectionName)
+            }
+        } else {
+            getVerseCollection(collectionName)
+        }
+
     }
 
     fun onAddVerseToCollection(collectionName: String, verse: Verse) {
@@ -80,11 +96,11 @@ class VerseCollectionEditViewModel: ViewModel() {
     }
 
     sealed class UiState {
-        object Loading: UiState()
-        object FailedToLoadVerseCollection: UiState()
+        object Loading : UiState()
+        object FailedToLoadVerseCollection : UiState()
         data class Content(
             val verseCollection: VerseCollection,
             val versesNotInCollection: List<Verse>
-        ): UiState()
+        ) : UiState()
     }
 }

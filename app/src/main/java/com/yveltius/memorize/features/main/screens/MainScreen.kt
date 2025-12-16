@@ -22,8 +22,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -31,7 +29,6 @@ import androidx.compose.material3.FloatingActionButtonMenu
 import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -74,16 +71,14 @@ import com.yveltius.versememorization.entity.collections.VerseCollection
 import com.yveltius.versememorization.entity.verses.Verse
 import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 import com.yveltius.versememorization.entity.versesearch.SearchResult
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 @Composable
 fun MainScreen(
     onAddVerse: () -> Unit,
-    onEditVerse: (Verse) -> Unit,
     onVerseCollectionSelected: (String) -> Unit,
-    onGoToChooseNextWord: (Verse) -> Unit,
+    onGoToVerseDetails: (Verse) -> Unit,
     onGoToSettings: () -> Unit,
     mainViewModel: MainViewModel = viewModel()
 ) {
@@ -99,13 +94,12 @@ fun MainScreen(
     //  and not directly pass UiState object
     RootView(
         uiState = uiState,
-        onEditVerse = onEditVerse,
         onAddVerse = onAddVerse,
         onQueryChanged = mainViewModel::onQueryChanged,
         onDeleteConfirmed = mainViewModel::removeVerse,
         onVerseCollectionSelected = onVerseCollectionSelected,
         onAddCollection = mainViewModel::onAddCollection,
-        onGoToChooseNextWord = onGoToChooseNextWord,
+        onGoToVerseDetails = onGoToVerseDetails,
         onGoToSettings = onGoToSettings
     )
 }
@@ -115,12 +109,11 @@ fun MainScreen(
 private fun RootView(
     uiState: MainViewModel.UiState,
     onAddVerse: () -> Unit,
-    onEditVerse: (Verse) -> Unit,
     onQueryChanged: (String) -> Unit,
     onVerseCollectionSelected: (String) -> Unit,
     onAddCollection: (String) -> Unit,
     onDeleteConfirmed: (Verse) -> Unit,
-    onGoToChooseNextWord: (Verse) -> Unit,
+    onGoToVerseDetails: (Verse) -> Unit,
     onGoToSettings: () -> Unit,
 ) {
     val scrollBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
@@ -184,13 +177,8 @@ private fun RootView(
                 collections = uiState.collections,
                 contentPadding = contentPadding,
                 lazyListState = lazyListState,
-                onEditVerse = onEditVerse,
                 onVerseCollectionSelected = onVerseCollectionSelected,
-                onShowDeletePrompt = {
-                    verseToBeDeleted = it
-                    showDeletePrompt = true
-                },
-                onGoToChooseNextWord = onGoToChooseNextWord,
+                onGoToVerseDetails = onGoToVerseDetails,
                 modifier = Modifier
                     .fillMaxWidth()
             )
@@ -405,10 +393,8 @@ private fun Content(
     collections: List<VerseCollection>,
     contentPadding: PaddingValues,
     lazyListState: LazyListState,
-    onEditVerse: (Verse) -> Unit,
     onVerseCollectionSelected: (String) -> Unit,
-    onShowDeletePrompt: (Verse) -> Unit,
-    onGoToChooseNextWord: (Verse) -> Unit,
+    onGoToVerseDetails: (Verse) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (verses.isEmpty() && collections.isEmpty()) {
@@ -488,9 +474,7 @@ private fun Content(
                 ) { index, verse ->
                     VerseView(
                         verse = verse,
-                        onEditVerse = onEditVerse,
-                        onShowDeletePrompt = onShowDeletePrompt,
-                        onGoToChooseNextWord = onGoToChooseNextWord,
+                        onGoToVerseDetails = onGoToVerseDetails,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -515,15 +499,11 @@ private fun Content(
 @Composable
 private fun VerseView(
     verse: Verse,
-    onEditVerse: (Verse) -> Unit,
-    onShowDeletePrompt: (Verse) -> Unit,
-    onGoToChooseNextWord: (Verse) -> Unit,
+    onGoToVerseDetails: (Verse) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(value = false) }
-
     Row(
-        modifier = modifier.clickable(onClick = { onGoToChooseNextWord(verse) }),
+        modifier = modifier.clickable(onClick = { onGoToVerseDetails(verse) }),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -543,26 +523,6 @@ private fun VerseView(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                // TODO this functionality needs to be in the Verse Details Screen
-                IconButton(
-                    onClick = {
-                        expanded = !expanded
-                    }
-                ) {
-                    VerseDropdownMenu(
-                        verse = verse,
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        onEdit = {
-                            onEditVerse(verse)
-                            expanded = false
-                        },
-                        onShowDeletePrompt = {
-                            onShowDeletePrompt(verse)
-                            expanded = false
-                        }
-                    )
-                }
             }
             Text(
                 text = buildAnnotatedVerse(verseNumberAndTexts = verse.verseText),
@@ -587,50 +547,6 @@ private fun VerseView(
     }
 }
 
-@Composable
-private fun VerseDropdownMenu(
-    verse: Verse,
-    expanded: Boolean,
-    onDismissRequest: () -> Unit,
-    onEdit: (Verse) -> Unit,
-    onShowDeletePrompt: (Verse) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-    ) {
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = onDismissRequest
-        ) {
-            DropdownMenuItem(
-                text = { Text(text = stringResource(R.string.edit)) },
-                onClick = { onEdit(verse) },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.outline_edit_24),
-                        contentDescription = null
-                    )
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(text = stringResource(R.string.delete)) },
-                onClick = { onShowDeletePrompt(verse) },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.outline_delete_24),
-                        contentDescription = null
-                    )
-                }
-            )
-        }
-        Icon(
-            painter = painterResource(R.drawable.outline_more_vert_24),
-            contentDescription = null
-        )
-    }
-}
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun CollectionView(
@@ -639,7 +555,7 @@ private fun CollectionView(
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
-        modifier = modifier,
+        modifier = modifier.clickable(onClick = { onVerseCollectionSelected(verseCollection.name) }),
     ) {
         Column(
             modifier = Modifier
@@ -707,9 +623,7 @@ private val verseForPreviews = Verse(
 private fun VerseViewPreviewLight() {
     VerseView(
         verse = verseForPreviews,
-        onEditVerse = {},
-        onShowDeletePrompt = {},
-        onGoToChooseNextWord = {},
+        onGoToVerseDetails = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
@@ -722,9 +636,7 @@ private fun VerseViewPreviewDark() {
     AppTheme {
         VerseView(
             verse = verseForPreviews,
-            onEditVerse = {},
-            onShowDeletePrompt = {},
-            onGoToChooseNextWord = {},
+            onGoToVerseDetails = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)

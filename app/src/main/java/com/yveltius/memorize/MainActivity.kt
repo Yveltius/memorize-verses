@@ -14,6 +14,7 @@ import com.yveltius.memorize.features.settings.screens.SupportTicketScreen
 import com.yveltius.memorize.features.main.screens.MainScreen
 import com.yveltius.memorize.features.main.screens.collections.VerseCollectionDetailsScreen
 import com.yveltius.memorize.features.main.screens.collections.VerseCollectionEditScreen
+import com.yveltius.memorize.features.main.screens.verses.VerseDetailsScreen
 import com.yveltius.memorize.features.practice.screens.choosenextword.ChooseNextWordScreen
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -31,7 +32,6 @@ class MainActivity : ComponentActivity() {
                 composable<Main> {
                     MainScreen(
                         onAddVerse = { navController.navigate(route = AddVerse) },
-                        onEditVerse = { verse -> navController.navigate(route = EditVerse(verse.uuid.toString())) },
                         onVerseCollectionSelected = { collectionName ->
                             navController.navigate(
                                 route = CollectionDetails(
@@ -39,9 +39,9 @@ class MainActivity : ComponentActivity() {
                                 )
                             )
                         },
-                        onGoToChooseNextWord = { verse ->
+                        onGoToVerseDetails = { verse ->
                             navController.navigate(
-                                route = ChooseNextWord(
+                                route = VerseDetails(
                                     verseUUIDString = verse.uuid.toString()
                                 )
                             )
@@ -61,6 +61,20 @@ class MainActivity : ComponentActivity() {
                     AddVerseScreen(
                         onBackPress = { navController.navigateUp() },
                         verseUUID = UUID.fromString(editVerse.verseUUIDString)
+                    )
+                }
+
+                composable<VerseDetails> { backStackEntry ->
+                    val verseDetails = backStackEntry.toRoute<VerseDetails>()
+                    VerseDetailsScreen(
+                        onBackPress = { navController.navigateUp() },
+                        onEditVerse = {
+                            navController.navigate(route = EditVerse(verseUUIDString = verseDetails.verseUUIDString))
+                        },
+                        onPracticeVerse = {
+                            navController.navigate(route = ChooseNextWord(verseUUIDString = verseDetails.verseUUIDString))
+                        },
+                        verseUUID = UUID.fromString(verseDetails.verseUUIDString)
                     )
                 }
 
@@ -120,6 +134,11 @@ private object AddVerse
 
 @Serializable
 private data class EditVerse(
+    val verseUUIDString: String
+)
+
+@Serializable
+private data class VerseDetails(
     val verseUUIDString: String
 )
 

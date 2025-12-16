@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -35,6 +34,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yveltius.memorize.R
 import com.yveltius.memorize.features.main.viewmodels.collections.VerseCollectionDetailsViewModel
 import com.yveltius.memorize.ui.components.BackButton
+import com.yveltius.memorize.ui.components.FailedToLoad
+import com.yveltius.memorize.ui.components.Loading
 import com.yveltius.memorize.ui.components.SectionHeader
 import com.yveltius.memorize.ui.text.buildAnnotatedVerse
 import com.yveltius.memorize.ui.theme.AppTheme
@@ -66,8 +67,8 @@ fun VerseCollectionDetailsScreen(
             }
 
             VerseCollectionDetailsViewModel.UiState.FailedToLoadVerseCollection -> {
-                FailedToLoadVerseCollection(
-                    verseCollectionName = verseCollectionName,
+                FailedToLoad(
+                    retryMessage = stringResource(R.string.collection_details_failed_to_get_collection, verseCollectionName),
                     onRetry = { verseCollectionDetailsViewModel.getCollection(collectionName = verseCollectionName) },
                     modifier = Modifier.fillMaxSize()
                 )
@@ -94,7 +95,7 @@ private fun Content(
             )
         },
         floatingActionButton = {
-            AddVerseFAB(
+            EditFAB(
                 onEditCollection = onEditCollection
             )
         },
@@ -146,7 +147,7 @@ private fun TopBar(
 }
 
 @Composable
-private fun AddVerseFAB(onEditCollection: () -> Unit, modifier: Modifier = Modifier) {
+private fun EditFAB(onEditCollection: () -> Unit, modifier: Modifier = Modifier) {
     FloatingActionButton(
         onClick = onEditCollection
     ) {
@@ -191,13 +192,6 @@ private fun VerseView(
 }
 
 @Composable
-private fun Loading(modifier: Modifier = Modifier) {
-    Box(modifier = modifier) {
-        CircularProgressIndicator(modifier = Modifier.align(alignment = Alignment.Center))
-    }
-}
-
-@Composable
 private fun FailedToLoadVerseCollection(
     verseCollectionName: String,
     onRetry: () -> Unit,
@@ -233,16 +227,6 @@ private fun EmptyContentPreview() {
             ),
             onEditCollection = {},
             onBackPress = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun LoadingPreview() {
-    AppTheme {
-        Loading(
-            modifier = Modifier.fillMaxSize()
         )
     }
 }

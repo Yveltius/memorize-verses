@@ -63,6 +63,13 @@
     <string name="edit_collection_section_header_not_in_collection">Not in Collection</string>
     <string name="edit_collection_action_add">Add</string>
     <string name="edit_collection_action_remove">Remove</string>
+    <string name="edit_collection_failed_to_load_collection">Failed to load %1$s.</string>
+
+    <!-- Verse Details Screen -->
+    <string name="verse_details_section_header_text">Text</string>
+    <string name="verse_details_section_header_tags">Tags</string>
+    <string name="verse_details_section_header_actions">Actions</string>
+    <string name="verse_details_failed_to_load_verse">Failed to load verse.</string>
 
     <!-- Add Verse Screen -->
     <string name="dialog_confirm_exit_without_saving_title">Exit without Saving</string>
@@ -99,4 +106,7 @@
     <string name="content_description_edit_collection">Edit Collection</string>
     <string name="content_description_add_to_collection">Add to Collection</string>
     <string name="content_description_remove_from_collection">Remove from Collection</string>
+    <string name="content_description_practice_verse">Practice Verse</string>
+    <string name="content_description_delete_verse">Delete Verse</string>
+    <string name="content_description_edit_verse">Edit Verse</string>
 </resources>
