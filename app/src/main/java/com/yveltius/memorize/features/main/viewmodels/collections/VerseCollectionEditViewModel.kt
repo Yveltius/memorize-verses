@@ -39,6 +39,12 @@ class VerseCollectionEditViewModel : ViewModel() {
             verseCollectionsUseCase.getCollection(collectionName = collectionName)
                 .onSuccess { verseCollection ->
                     _uiState.update {
+                        when {
+                            allVerses != null && allVerses?.isEmpty() == true -> {
+
+                            }
+
+                        }
                         allVerses?.let { verses ->
                             UiState.Content(
                                 verseCollection,
@@ -97,7 +103,11 @@ class VerseCollectionEditViewModel : ViewModel() {
 
     sealed class UiState {
         object Loading : UiState()
+
         object FailedToLoadVerseCollection : UiState()
+
+        object NoVersesAvailable: UiState()
+
         data class Content(
             val verseCollection: VerseCollection,
             val versesNotInCollection: List<Verse>
