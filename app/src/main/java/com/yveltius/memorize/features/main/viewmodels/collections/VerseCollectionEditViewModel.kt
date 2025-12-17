@@ -41,18 +41,24 @@ class VerseCollectionEditViewModel : ViewModel() {
                     _uiState.update {
                         when {
                             allVerses != null && allVerses?.isEmpty() == true -> {
-
+                                UiState.NoVersesAvailable
                             }
 
+                            allVerses != null -> {
+                                allVerses?.let { verses ->
+                                    UiState.Content(
+                                        verseCollection,
+                                        versesNotInCollection = verses.filter { verseBeingFiltered ->
+                                            verseCollection.verses.none { verseBeingFiltered.uuid == it.uuid }
+                                        }
+                                    )
+                                } ?: UiState.FailedToLoadVerseCollection
+                            }
+
+                            else -> {
+                                UiState.FailedToLoadVerseCollection
+                            }
                         }
-                        allVerses?.let { verses ->
-                            UiState.Content(
-                                verseCollection,
-                                versesNotInCollection = verses.filter { verseBeingFiltered ->
-                                    verseCollection.verses.none { verseBeingFiltered.uuid == it.uuid }
-                                }
-                            )
-                        } ?: UiState.FailedToLoadVerseCollection
                     }
                 }.onFailure {
                     _uiState.update {
@@ -106,7 +112,7 @@ class VerseCollectionEditViewModel : ViewModel() {
 
         object FailedToLoadVerseCollection : UiState()
 
-        object NoVersesAvailable: UiState()
+        object NoVersesAvailable : UiState()
 
         data class Content(
             val verseCollection: VerseCollection,

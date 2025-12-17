@@ -64,6 +64,7 @@
     <string name="edit_collection_action_add">Add</string>
     <string name="edit_collection_action_remove">Remove</string>
     <string name="edit_collection_failed_to_load_collection">Failed to load %1$s.</string>
+    <string name="edit_collection_no_verses_available">You have not added any verses yet. Hit the \'+\' on the main screen to add. May add the ability to add from here later.</string>
 
     <!-- Verse Details Screen -->
     <string name="verse_details_section_header_text">Text</string>

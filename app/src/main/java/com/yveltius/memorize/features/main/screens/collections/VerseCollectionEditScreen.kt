@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -94,6 +95,12 @@ fun VerseCollectionEditScreen(
         }
         VerseCollectionEditViewModel.UiState.Loading -> {
             Loading(modifier = Modifier.fillMaxSize())
+        }
+
+        VerseCollectionEditViewModel.UiState.NoVersesAvailable -> {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Text(text = stringResource(R.string.edit_collection_no_verses_available))
+            }
         }
     }
 }
