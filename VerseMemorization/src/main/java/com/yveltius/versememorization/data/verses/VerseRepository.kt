@@ -39,7 +39,7 @@ internal interface VerseRepository {
         verseNumber: Int? = null,
         partialText: String? = null,
         tags: List<String> = listOf()
-    ): Result<List<Verse>>
+    ): Result<Set<Verse>>
 
     @Throws(Throwable::class)
     suspend fun addVerse(verse: Verse): Result<Unit>

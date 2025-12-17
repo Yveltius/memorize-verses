@@ -3,6 +3,8 @@ package com.yveltius.memorize.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -19,9 +21,9 @@ fun <T> VerticalGrid(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    content: @Composable (index: Int, item: T) -> Unit = { index, item -> },
+    content: @Composable RowScope.(index: Int, item: T) -> Unit = { index, item -> },
 ) {
-    val splitList by remember {
+    val splitList by remember(items.size) {
         derivedStateOf {
             val remainder = items.size % columns
 
@@ -46,6 +48,10 @@ fun <T> VerticalGrid(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = horizontalArrangement) {
                 split.forEachIndexed { index, t ->
                     content((splitIndex * columns) + index, t)
+                }
+
+                if (split.size <= 1) {
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }

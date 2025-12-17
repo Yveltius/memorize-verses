@@ -22,6 +22,6 @@ class GetVersesUseCase internal constructor(
         verseNumber: Int? = null,
         partialText: String? = null,
         tags: List<String> = listOf()
-    ): Result<List<Verse>> =
+    ): Result<Set<Verse>> =
         verseRepository.getVerses(book, chapter, verseNumber, partialText, tags)
 }
