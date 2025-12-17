@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
@@ -17,13 +18,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,21 +69,29 @@ fun VerseDetailsScreen(
             is VerseDetailsViewModel.UiState.Content -> {
                 Content(
                     verse = (uiState as VerseDetailsViewModel.UiState.Content).verse,
+                    failedToLoadVerse = (uiState as VerseDetailsViewModel.UiState.Content).failedToDeleteVerse,
                     onBackPress = onBackPress,
                     onEditVerse = onEditVerse,
-                    onPracticeVerse = onPracticeVerse
+                    onPracticeVerse = onPracticeVerse,
+                    onDeleteVerse = verseDetailsViewModel::deleteVerse,
+                    onRetryDeleteSnackbarDismissed = verseDetailsViewModel::resetFailedToDeleteVerse
                 )
             }
 
             VerseDetailsViewModel.UiState.FailedToLoadVerse -> {
                 FailedToLoad(
                     retryMessage = stringResource(R.string.verse_details_failed_to_load_verse),
-                    onRetry = { verseDetailsViewModel.onRetry(verseUUID) },
+                    onRetry = { verseDetailsViewModel.onRetryLoadVerse(verseUUID) },
                     modifier = Modifier.fillMaxSize()
                 )
             }
 
+            VerseDetailsViewModel.UiState.DeletingVerse,
             VerseDetailsViewModel.UiState.Loading -> Loading(modifier = Modifier.fillMaxSize())
+
+            VerseDetailsViewModel.UiState.DeletedVerse -> {
+                onBackPress()
+            }
         }
     }
 }
@@ -83,12 +100,37 @@ fun VerseDetailsScreen(
 @Composable
 private fun Content(
     verse: Verse,
+    failedToLoadVerse: Boolean,
     onBackPress: () -> Unit,
     onEditVerse: () -> Unit,
-    onPracticeVerse: () -> Unit
+    onPracticeVerse: () -> Unit,
+    onDeleteVerse: (Verse) -> Unit,
+    onRetryDeleteSnackbarDismissed: (Verse) -> Unit
 ) {
+    val context = LocalContext.current
+    var showDeleteVerseDialog by remember { mutableStateOf(value = false) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(failedToLoadVerse) {
+        if (failedToLoadVerse) {
+            val snackbarString = context.getString(R.string.snackbar_failed_to_delete_verse, verse.getVerseString())
+            val snackbarActionText = context.getString(R.string.snackbar_action_retry)
+
+            val result = snackbarHostState.showSnackbar(
+                message = snackbarString,
+                actionLabel = snackbarActionText
+            )
+
+            when (result) {
+                SnackbarResult.Dismissed -> onRetryDeleteSnackbarDismissed(verse)
+                SnackbarResult.ActionPerformed -> onDeleteVerse(verse)
+            }
+        }
+    }
+
     Scaffold(
         topBar = { TopBar(title = verse.getVerseString(), onBackPress = onBackPress) },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
@@ -103,10 +145,34 @@ private fun Content(
 
             Actions(
                 onEditVerse = onEditVerse,
-                onPracticeVerse = onPracticeVerse
+                onPracticeVerse = onPracticeVerse,
+                onDeleteVerse = { showDeleteVerseDialog = true }
+            )
+        }
+
+        if (showDeleteVerseDialog) {
+            DeleteVerseAlertDialog(
+                onDismissRequest = { showDeleteVerseDialog = false },
+                onConfirmRequest = {
+                    onDeleteVerse(verse)
+                    showDeleteVerseDialog = false
+                },
+                verseToBeDeleted = verse
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TopBar(
+    title: String,
+    onBackPress: () -> Unit
+) {
+    TopAppBar(
+        title = { Text(text = title) },
+        navigationIcon = { BackButton(onBackPress = onBackPress) }
+    )
 }
 
 @Composable
@@ -142,7 +208,11 @@ private fun Tags(verse: Verse) {
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun Actions(onEditVerse: () -> Unit, onPracticeVerse: () -> Unit) {
+private fun Actions(
+    onEditVerse: () -> Unit,
+    onPracticeVerse: () -> Unit,
+    onDeleteVerse: () -> Unit,
+) {
     SectionHeader(
         text = stringResource(R.string.verse_details_section_header_actions),
         modifier = Modifier.fillMaxWidth()
@@ -155,7 +225,7 @@ private fun Actions(onEditVerse: () -> Unit, onPracticeVerse: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         MediumSquareFilledTonalIconButton(
-            onClick = {},
+            onClick = onDeleteVerse,
             iconResId = R.drawable.icon_trash,
             contentDescriptionResId = R.string.content_description_delete_verse
         )
@@ -194,15 +264,35 @@ private fun MediumSquareFilledTonalIconButton(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(
-    title: String,
-    onBackPress: () -> Unit
+private fun DeleteVerseAlertDialog(
+    onDismissRequest: () -> Unit,
+    onConfirmRequest: (Verse) -> Unit,
+    verseToBeDeleted: Verse?,
 ) {
-    TopAppBar(
-        title = { Text(text = title) },
-        navigationIcon = { BackButton(onBackPress = onBackPress) }
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        dismissButton = {
+            TextButton(
+                onClick = onDismissRequest
+            ) {
+                Text(text = stringResource(R.string.cancel))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirmRequest(verseToBeDeleted!!) }) {
+                Text(text = stringResource(R.string.confirm))
+            }
+        },
+        text = {
+            Text(
+                text = stringResource(
+                    id = R.string.dialog_delete_verse_description,
+                    verseToBeDeleted?.getVerseString()
+                        ?: stringResource(R.string.dialog_delete_verse_description)
+                )
+            )
+        }
     )
 }
 
@@ -228,9 +318,12 @@ private fun ContentPreview() {
     AppTheme {
         Content(
             verse = verseForPreviews,
+            failedToLoadVerse = false,
             onBackPress = {},
             onPracticeVerse = {},
-            onEditVerse = {}
+            onEditVerse = {},
+            onDeleteVerse = {},
+            onRetryDeleteSnackbarDismissed = {},
         )
     }
 }
@@ -241,9 +334,12 @@ private fun DarkContentPreview() {
     AppTheme {
         Content(
             verse = verseForPreviews,
+            failedToLoadVerse = false,
             onBackPress = {},
             onEditVerse = {},
-            onPracticeVerse = {}
+            onPracticeVerse = {},
+            onDeleteVerse = {},
+            onRetryDeleteSnackbarDismissed = {},
         )
     }
 }

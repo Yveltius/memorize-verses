@@ -70,6 +70,8 @@
     <string name="verse_details_section_header_tags">Tags</string>
     <string name="verse_details_section_header_actions">Actions</string>
     <string name="verse_details_failed_to_load_verse">Failed to load verse.</string>
+    <string name="snackbar_failed_to_delete_verse">Failed to delete %1$s.</string>
+    <string name="snackbar_action_retry">Retry</string>
 
     <!-- Add Verse Screen -->
     <string name="dialog_confirm_exit_without_saving_title">Exit without Saving</string>
