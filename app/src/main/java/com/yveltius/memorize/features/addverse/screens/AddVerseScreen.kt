@@ -474,7 +474,7 @@ private fun EditableVerseNumberAndText(
 
             IconButton(onClick = { onDeleteVerseNumberAndText(index) }) {
                 Icon(
-                    painter = painterResource(R.drawable.outline_delete_24),
+                    painter = painterResource(R.drawable.icon_trash),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )
@@ -524,7 +524,7 @@ fun NoEditVerseNumberAndText(
 
         IconButton(onClick = onDeleteVerseNumberAndText) {
             Icon(
-                painter = painterResource(R.drawable.outline_delete_24),
+                painter = painterResource(R.drawable.icon_trash),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )

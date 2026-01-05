@@ -1,5 +1,7 @@
 package com.yveltius.versememorization
 
+import com.yveltius.versememorization.data.collections.VerseCollectionRepository
+import com.yveltius.versememorization.data.collections.VerseCollectionRepositoryImpl
 import com.yveltius.versememorization.data.util.JsonFileReader
 import com.yveltius.versememorization.data.util.JsonFileReaderImpl
 import com.yveltius.versememorization.data.util.Log
@@ -8,6 +10,7 @@ import com.yveltius.versememorization.data.verses.TagsRepository
 import com.yveltius.versememorization.data.verses.TagsRepositoryImpl
 import com.yveltius.versememorization.data.verses.VerseRepository
 import com.yveltius.versememorization.data.verses.VerseRepositoryImpl
+import com.yveltius.versememorization.domain.collections.VerseCollectionsUseCase
 import com.yveltius.versememorization.domain.verses.AddVersesUseCase
 import com.yveltius.versememorization.domain.verses.GetAllTagsUseCase
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
@@ -30,6 +33,14 @@ object KoinModules {
                 verseRepository = get()
             )
         }
+
+        factory<VerseCollectionRepository> {
+            VerseCollectionRepositoryImpl(
+                log = get(),
+                jsonFileReader = get(),
+                verseRepository = get()
+            )
+        }
     }
 
     private val useCaseModule = module {
@@ -42,6 +53,8 @@ object KoinModules {
         factory { UpdateVerseUseCase(verseRepository = get()) }
 
         factory { GetAllTagsUseCase(tagsRepository = get()) }
+
+        factory { VerseCollectionsUseCase(verseCollectionRepository = get()) }
     }
 
     private val miscModule = module {

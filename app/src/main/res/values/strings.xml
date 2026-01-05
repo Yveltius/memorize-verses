@@ -14,8 +14,6 @@
     <string name="add_verse_text">Add Verse</string>
     <string name="no_text">No Text</string>
 
-    <string name="no_verses">No verses to show</string>
-
     <string name="error_empty_tag">You cannot save an empty tag.</string>
 
     <string name="label_add_tag">Add Tag</string>
@@ -34,10 +32,49 @@
     <string name="dialog_text_delete_verse_number_and_text">Are you sure you want to delete %1$s?</string>
     <string name="dialog_text_delete_verse_number_and_text_generic">Are you sure?</string>
 
+    <!-- Section Headers -->
+    <string name="section_header_verses">Verses</string>
+    <string name="section_header_collections">Collections</string>
+
     <!-- Verse List Screen -->
+    <string name="verses_list_no_verses_or_collections">Tap the + at the bottom to add a Collection or Verse</string>
     <string name="top_bar_title_verses_list">Verses</string>
     <string name="top_bar_search_placeholder">Search</string>
     <string name="search_no_results">No Results</string>
+    <string name="verses_list_no_verses">No Verses</string>
+    <string name="verses_list_no_tags">No Tags</string>
+    <string name="verses_list_no_collections">No Collections</string>
+    <string name="verses_list_no_verses_in_collection">Empty</string>
+    <string name="verses_list_one_verse_in_collection">1 Verse</string>
+    <string name="verses_list_multiple_verses_in_collection">%d Verses</string>
+    <string name="verses_list_fab_menu_add_collection">Collection</string>
+    <string name="verses_list_fab_menu_add_verse">Verse</string>
+    <string name="dialog_title_add_collection">Add Collection</string>
+    <string name="dialog_text_field_hint_add_collection">Collection</string>
+    <string name="main_screen_button_collection_view_details">Details</string>
+
+    <!-- Collection Details Screen -->
+    <string name="collection_details_failed_to_get_collection">Failed to get %1$s.</string>
+    <string name="collection_details_button_retry">Retry</string>
+    <string name="collection_details_no_verses_in_collection">Your collection does not contain any verses. Press the Edit button below to add some.</string>
+    <string name="snackbar_failed_to_delete_collection">Failed to delete %1$s.</string>
+    <string name="dialog_delete_collection_description">Are you sure you want to delete %1$s?</string>
+
+    <!-- Edit Collection -->
+    <string name="edit_collection_section_header_in_collection">In Collection</string>
+    <string name="edit_collection_section_header_not_in_collection">Not in Collection</string>
+    <string name="edit_collection_action_add">Add</string>
+    <string name="edit_collection_action_remove">Remove</string>
+    <string name="edit_collection_failed_to_load_collection">Failed to load %1$s.</string>
+    <string name="edit_collection_no_verses_available">You have not added any verses yet. Hit the \'+\' on the main screen to add. May add the ability to add from here later.</string>
+
+    <!-- Verse Details Screen -->
+    <string name="verse_details_section_header_text">Text</string>
+    <string name="verse_details_section_header_tags">Tags</string>
+    <string name="verse_details_section_header_actions">Actions</string>
+    <string name="verse_details_failed_to_load_verse">Failed to load verse.</string>
+    <string name="snackbar_failed_to_delete_verse">Failed to delete %1$s.</string>
+    <string name="snackbar_action_retry">Retry</string>
 
     <!-- Add Verse Screen -->
     <string name="dialog_confirm_exit_without_saving_title">Exit without Saving</string>
@@ -71,4 +108,11 @@
     <string name="content_description_see_results">See Results</string>
     <string name="content_description_close_search">Close Search</string>
     <string name="content_description_clear_search">Clear Search</string>
+    <string name="content_description_edit_collection">Edit Collection</string>
+    <string name="content_description_add_to_collection">Add to Collection</string>
+    <string name="content_description_remove_from_collection">Remove from Collection</string>
+    <string name="content_description_practice_verse">Practice Verse</string>
+    <string name="content_description_delete_verse">Delete Verse</string>
+    <string name="content_description_edit_verse">Edit Verse</string>
+    <string name="content_description_delete_collection">Delete Collection</string>
 </resources>

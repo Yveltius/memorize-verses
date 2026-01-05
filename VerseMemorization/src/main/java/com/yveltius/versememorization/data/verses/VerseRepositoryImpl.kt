@@ -38,7 +38,7 @@ internal class VerseRepositoryImpl(
         ) {
             val verses = getVerses(book, chapter, verseNumber, partialText, tags).getOrThrow()
 
-            val verse = verses.filterByUUID(uuid = uuid!!).first()
+            val verse = verses.filterByUUID(uuid = uuid).first()
 
             log.debug(
                 tag = logTag,
@@ -55,7 +55,7 @@ internal class VerseRepositoryImpl(
         verseNumber: Int?,
         partialText: String?,
         tags: List<String>
-    ): Result<List<Verse>> {
+    ): Result<Set<Verse>> {
         return doWork(
             failureMessage = "Failed to get verses matching the following parameters:\n" +
                     "Book:$book\n" +
@@ -73,7 +73,7 @@ internal class VerseRepositoryImpl(
                 .filterByVerseNumber(verseNumber)
                 .filterByPartialText(partialText)
                 .filterByTags(tags)
-                .toList()
+                .toSet()
 
             log.debug(
                 tag = logTag,
@@ -160,7 +160,7 @@ internal class VerseRepositoryImpl(
         }
     }
 
-    private suspend fun getVersesFromFile(): Result<List<Verse>> {
+    private suspend fun getVersesFromFile(): Result<Set<Verse>> {
         return doWork(
             failureMessage = "Failed to get verses from File($VERSES_FILE_NAME)."
         ) {
@@ -173,9 +173,9 @@ internal class VerseRepositoryImpl(
             )
 
             if (versesJsonString.isNotEmpty()) {
-                versesJsonString.fromJsonString<List<Verse>>()
+                versesJsonString.fromJsonString<Set<Verse>>()
             } else {
-                listOf()
+                emptySet()
             }
         }
     }
@@ -197,6 +197,7 @@ internal class VerseRepositoryImpl(
         }
     }
 
+    // region Extension functions
     private fun Sequence<Verse>.filterByBook(book: String?): Sequence<Verse> {
         return this.filter { verse: Verse ->
             book?.let {
@@ -242,7 +243,7 @@ internal class VerseRepositoryImpl(
         }
     }
 
-    private fun List<Verse>.filterByUUID(uuid: UUID?): List<Verse> {
+    private fun Set<Verse>.filterByUUID(uuid: UUID?): List<Verse> {
         return this.filter { verse ->
             uuid?.let {
                 verse.uuid == uuid
@@ -265,12 +266,13 @@ internal class VerseRepositoryImpl(
     }
 
     /**
-     * @param filterVerse The [Verse] we do NOT want in the [List]
-     * @return [List] of all [Verse]s that do not match the given [Verse]
+     * @param filterVerse The [Verse] we do NOT want in the [Set]
+     * @return [Set] of all [Verse]s that do not match the given [Verse]
      */
-    private fun List<Verse>.filterWithoutVerse(filterVerse: Verse): List<Verse> {
+    private fun Set<Verse>.filterWithoutVerse(filterVerse: Verse): List<Verse> {
         return this.filterNot { verse ->
             verse.matches(other = filterVerse)
         }
     }
+    // endregion
 }
