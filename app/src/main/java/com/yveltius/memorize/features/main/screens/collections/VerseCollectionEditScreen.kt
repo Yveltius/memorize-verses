@@ -88,18 +88,37 @@ fun VerseCollectionEditScreen(
 
         VerseCollectionEditViewModel.UiState.FailedToLoadVerseCollection -> {
             FailedToLoad(
-                retryMessage = stringResource(R.string.edit_collection_failed_to_load_collection, collectionName),
+                retryMessage = stringResource(
+                    R.string.edit_collection_failed_to_load_collection,
+                    collectionName
+                ),
                 onRetry = { verseCollectionEditViewModel.onRetry(collectionName) },
                 modifier = Modifier.fillMaxSize()
             )
         }
+
         VerseCollectionEditViewModel.UiState.Loading -> {
             Loading(modifier = Modifier.fillMaxSize())
         }
 
         VerseCollectionEditViewModel.UiState.NoVersesAvailable -> {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Text(text = stringResource(R.string.edit_collection_no_verses_available))
+            AppTheme {
+                Scaffold(
+                    topBar = { TopBar(collectionName = collectionName, onBackPress = onBackPress) }
+                ) { innerPadding ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues = innerPadding)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.edit_collection_no_verses_available),
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .padding(16.dp)
+                        )
+                    }
+                }
             }
         }
     }

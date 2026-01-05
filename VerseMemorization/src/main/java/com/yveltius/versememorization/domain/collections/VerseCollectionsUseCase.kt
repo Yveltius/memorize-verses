@@ -31,6 +31,10 @@ class VerseCollectionsUseCase internal constructor(
         return verseCollectionRepository.deleteCollection(collection)
     }
 
+    suspend fun deleteCollection(collectionName: String): Result<Unit> {
+        return verseCollectionRepository.deleteCollection(collectionName)
+    }
+
     suspend fun addVerseToCollection(collectionName: String, verse: Verse): Result<Unit> {
         return verseCollectionRepository.addVerseToCollection(collectionName, verse)
     }

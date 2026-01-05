@@ -95,20 +95,24 @@ internal class VerseCollectionRepositoryImpl(
     }
 
     override suspend fun deleteCollection(collection: VerseCollection): Result<Unit> {
+        return deleteCollection(collectionName = collection.name)
+    }
+
+    override suspend fun deleteCollection(collectionName: String): Result<Unit> {
         return doWork(
-            failureMessage = "Failed to delete VerseCollection($collection)."
+            failureMessage = "Failed to delete VerseCollection($collectionName)."
         ) {
             val allCollections = getAllCollections().getOrThrow()
 
             writeCollectionsToFile(
                 collections = allCollections
-                    .filter { verseCollection -> collection.name != verseCollection.name }
+                    .filter { verseCollection -> collectionName != verseCollection.name }
                     .toSet()
             ).getOrThrow()
 
             log.debug(
                 tag = logTag,
-                message = "Successfully deleted VerseCollection(${collection.name}."
+                message = "Successfully deleted VerseCollection(${collectionName}."
             )
         }
     }

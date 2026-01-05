@@ -9,21 +9,31 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -62,13 +72,18 @@ fun VerseCollectionDetailsScreen(
                 Content(
                     verseCollection = (uiState as VerseCollectionDetailsViewModel.UiState.Content).verseCollection,
                     onEditCollection = { onEditCollection(verseCollectionName) },
-                    onBackPress = onBackPress
+                    onBackPress = onBackPress,
+                    onDeleteCollection = verseCollectionDetailsViewModel::onDeleteCollection,
+                    failedToDeleteCollection = (uiState as VerseCollectionDetailsViewModel.UiState.Content).failedToDeleteVerseCollection
                 )
             }
 
             VerseCollectionDetailsViewModel.UiState.FailedToLoadVerseCollection -> {
                 FailedToLoad(
-                    retryMessage = stringResource(R.string.collection_details_failed_to_get_collection, verseCollectionName),
+                    retryMessage = stringResource(
+                        R.string.collection_details_failed_to_get_collection,
+                        verseCollectionName
+                    ),
                     onRetry = { verseCollectionDetailsViewModel.getCollection(collectionName = verseCollectionName) },
                     modifier = Modifier.fillMaxSize()
                 )
@@ -76,6 +91,10 @@ fun VerseCollectionDetailsScreen(
 
             VerseCollectionDetailsViewModel.UiState.Loading -> {
                 Loading(modifier = Modifier.fillMaxSize())
+            }
+
+            VerseCollectionDetailsViewModel.UiState.CollectionDeleted -> {
+                onBackPress()
             }
         }
     }
@@ -85,19 +104,51 @@ fun VerseCollectionDetailsScreen(
 private fun Content(
     verseCollection: VerseCollection,
     onEditCollection: () -> Unit,
-    onBackPress: () -> Unit
+    onBackPress: () -> Unit,
+    onDeleteCollection: (VerseCollection) -> Unit,
+    failedToDeleteCollection: Boolean,
 ) {
+    var showDeleteVerseCollectionDialog by remember { mutableStateOf(value = false) }
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(failedToDeleteCollection) {
+        val message = context.getString(
+            R.string.snackbar_failed_to_delete_collection,
+            verseCollection.name
+        )
+        val actionLabel = context.getString(R.string.snackbar_action_retry)
+        if (failedToDeleteCollection) {
+            val result =
+                snackbarHostState.showSnackbar(
+                    message = message,
+                    actionLabel = actionLabel,
+                    withDismissAction = true
+                )
+
+            when (result) {
+                SnackbarResult.Dismissed -> {}
+                SnackbarResult.ActionPerformed -> {
+                    onDeleteCollection(verseCollection)
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopBar(
                 collectionName = verseCollection.name,
-                onBackPress = onBackPress
+                onBackPress = onBackPress,
+                onDeleteCollection = { showDeleteVerseCollectionDialog = true }
             )
         },
         floatingActionButton = {
             EditFAB(
                 onEditCollection = onEditCollection
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
@@ -115,7 +166,9 @@ private fun Content(
                 verseCollection.verses.forEachIndexed { index, verse ->
                     VerseView(
                         verse = verse,
-                        modifier = Modifier.fillMaxWidth().padding(16.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
                     )
 
                     if (index < (verseCollection.verses.size - 1)) {
@@ -131,6 +184,14 @@ private fun Content(
                 )
             }
         }
+
+        if (showDeleteVerseCollectionDialog) {
+            DeleteVerseCollectionAlertDialog(
+                onDismissRequest = { showDeleteVerseCollectionDialog = false },
+                onConfirmRequest = onDeleteCollection,
+                verseCollectionToBeDeleted = verseCollection
+            )
+        }
     }
 }
 
@@ -138,11 +199,20 @@ private fun Content(
 @Composable
 private fun TopBar(
     collectionName: String,
-    onBackPress: () -> Unit
+    onBackPress: () -> Unit,
+    onDeleteCollection: () -> Unit
 ) {
     TopAppBar(
         title = { Text(text = collectionName) },
         navigationIcon = { BackButton(onBackPress = onBackPress) },
+        actions = {
+            IconButton(onClick = onDeleteCollection) {
+                Icon(
+                    painter = painterResource(R.drawable.icon_trash),
+                    contentDescription = stringResource(R.string.content_description_delete_collection)
+                )
+            }
+        }
     )
 }
 
@@ -192,6 +262,37 @@ private fun VerseView(
 }
 
 @Composable
+private fun DeleteVerseCollectionAlertDialog(
+    onDismissRequest: () -> Unit,
+    onConfirmRequest: (VerseCollection) -> Unit,
+    verseCollectionToBeDeleted: VerseCollection,
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        dismissButton = {
+            TextButton(
+                onClick = onDismissRequest
+            ) {
+                Text(text = stringResource(R.string.cancel))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirmRequest(verseCollectionToBeDeleted) }) {
+                Text(text = stringResource(R.string.confirm))
+            }
+        },
+        text = {
+            Text(
+                text = stringResource(
+                    id = R.string.dialog_delete_collection_description,
+                    verseCollectionToBeDeleted.name
+                )
+            )
+        }
+    )
+}
+
+@Composable
 private fun FailedToLoadVerseCollection(
     verseCollectionName: String,
     onRetry: () -> Unit,
@@ -226,7 +327,9 @@ private fun EmptyContentPreview() {
                 verses = setOf()
             ),
             onEditCollection = {},
-            onBackPress = {}
+            onBackPress = {},
+            onDeleteCollection = {},
+            failedToDeleteCollection = false
         )
     }
 }

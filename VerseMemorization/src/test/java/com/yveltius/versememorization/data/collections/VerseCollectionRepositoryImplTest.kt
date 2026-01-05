@@ -304,6 +304,28 @@ class VerseCollectionRepositoryImplTest {
     }
 
     @Test
+    fun `name only deleted collection no longer shows up in all collections`() {
+        val collectionRepository: VerseCollectionRepository by inject(VerseCollectionRepository::class.java)
+
+        val isCollectionDeleted = runBlocking {
+            val allCollectionsPreDelete = collectionRepository.getAllCollections().getOrThrow()
+            val nameOfCollectionBeingDeleted = allCollectionsPreDelete.first().name
+            collectionRepository.deleteCollection(collectionName = nameOfCollectionBeingDeleted)
+
+            !collectionRepository.getAllCollections().getOrThrow().any { collection ->
+                collection.name.equals(
+                    nameOfCollectionBeingDeleted,
+                    ignoreCase = true
+                )
+            }
+        }
+
+        assertTrue(message = "Found a collection in all collections that should have been deleted.") {
+            isCollectionDeleted
+        }
+    }
+
+    @Test
     fun `adding a verse to a collection it is already a part of can count as a success`() {
         val collectionRepository: VerseCollectionRepository by inject(VerseCollectionRepository::class.java)
         val verseRepository: VerseRepository by inject(VerseRepository::class.java)

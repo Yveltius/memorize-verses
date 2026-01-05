@@ -57,6 +57,8 @@
     <string name="collection_details_failed_to_get_collection">Failed to get %1$s.</string>
     <string name="collection_details_button_retry">Retry</string>
     <string name="collection_details_no_verses_in_collection">Your collection does not contain any verses. Press the Edit button below to add some.</string>
+    <string name="snackbar_failed_to_delete_collection">Failed to delete %1$s.</string>
+    <string name="dialog_delete_collection_description">Are you sure you want to delete %1$s?</string>
 
     <!-- Edit Collection -->
     <string name="edit_collection_section_header_in_collection">In Collection</string>
@@ -112,4 +114,5 @@
     <string name="content_description_practice_verse">Practice Verse</string>
     <string name="content_description_delete_verse">Delete Verse</string>
     <string name="content_description_edit_verse">Edit Verse</string>
+    <string name="content_description_delete_collection">Delete Collection</string>
 </resources>

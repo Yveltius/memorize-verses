@@ -348,6 +348,7 @@ private fun AddCollectionAlertDialog(
                 OutlinedTextField(
                     value = collectionName,
                     onValueChange = { collectionName = it },
+                    singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
