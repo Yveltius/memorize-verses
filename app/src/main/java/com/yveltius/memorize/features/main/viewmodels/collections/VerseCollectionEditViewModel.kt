@@ -6,6 +6,7 @@ import com.yveltius.versememorization.domain.collections.VerseCollectionsUseCase
 import com.yveltius.versememorization.domain.verses.GetVersesUseCase
 import com.yveltius.versememorization.entity.collections.VerseCollection
 import com.yveltius.versememorization.entity.verses.Verse
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -20,65 +21,42 @@ class VerseCollectionEditViewModel : ViewModel() {
         MutableStateFlow<UiState>(value = UiState.Loading)
     val uiState = _uiState.asStateFlow()
 
-    private var allVerses: List<Verse>? = null
-
-    init {
+    fun loadContent(collectionName: String) {
         viewModelScope.launch {
-            getVerses()
-        }
-    }
+            val versesDeferred = async { getVersesUseCase.getVerses() }
+            val verseCollectionDeferred = async {
+                verseCollectionsUseCase.getCollection(collectionName = collectionName)
+            }
 
-    private suspend fun getVerses() {
-        getVersesUseCase.getVerses()
-            .onSuccess { verses -> allVerses = verses.toList() }
-            .onFailure { _uiState.update { UiState.FailedToLoadVerseCollection } }
-    }
+            val versesResult = versesDeferred.await()
+            val verseCollectionResult = verseCollectionDeferred.await()
 
-    fun getVerseCollection(collectionName: String) {
-        viewModelScope.launch {
-            verseCollectionsUseCase.getCollection(collectionName = collectionName)
-                .onSuccess { verseCollection ->
-                    _uiState.update {
-                        when {
-                            allVerses != null && allVerses?.isEmpty() == true -> {
-                                UiState.NoVersesAvailable
-                            }
+            if (versesResult.isFailure || verseCollectionResult.isFailure) {
+                _uiState.update { UiState.FailedToLoadVerseCollection }
+                return@launch
+            }
 
-                            allVerses != null -> {
-                                allVerses?.let { verses ->
-                                    UiState.Content(
-                                        verseCollection,
-                                        versesNotInCollection = verses.filter { verseBeingFiltered ->
-                                            verseCollection.verses.none { verseBeingFiltered.uuid == it.uuid }
-                                        }
-                                    )
-                                } ?: UiState.FailedToLoadVerseCollection
-                            }
+            val verses = versesResult.getOrThrow()
+            val verseCollection = verseCollectionResult.getOrThrow()
 
-                            else -> {
-                                UiState.FailedToLoadVerseCollection
-                            }
-                        }
+            if (verses.isEmpty()) {
+                _uiState.update { UiState.NoVersesAvailable }
+                return@launch
+            }
+
+            _uiState.update {
+                UiState.Content(
+                    verseCollection = verseCollection,
+                    versesNotInCollection = verses.filter { verseBeingFiltered ->
+                        verseCollection.verses.none { verseBeingFiltered.uuid == it.uuid }
                     }
-                }.onFailure {
-                    _uiState.update {
-                        UiState.FailedToLoadVerseCollection
-                    }
-                }
+                )
+            }
         }
     }
 
     fun onRetry(collectionName: String) {
-        if (allVerses == null) {
-            viewModelScope.launch {
-                // getVersesCollection shouldn't run until after getVerses completes
-                getVerses()
-                getVerseCollection(collectionName)
-            }
-        } else {
-            getVerseCollection(collectionName)
-        }
-
+        loadContent(collectionName)
     }
 
     fun onAddVerseToCollection(collectionName: String, verse: Verse) {
@@ -87,7 +65,7 @@ class VerseCollectionEditViewModel : ViewModel() {
                 collectionName = collectionName,
                 verse = verse
             ).onSuccess {
-                getVerseCollection(collectionName)
+                loadContent(collectionName)
             }.onFailure {
                 // snackbar retry?
             }
@@ -100,7 +78,7 @@ class VerseCollectionEditViewModel : ViewModel() {
                 collectionName = collectionName,
                 verse = verse
             ).onSuccess {
-                getVerseCollection(collectionName)
+                loadContent(collectionName)
             }.onFailure {
                 // snackbar retry?
             }

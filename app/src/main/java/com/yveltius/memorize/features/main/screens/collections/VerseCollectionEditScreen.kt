@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,11 +57,14 @@ import com.yveltius.versememorization.entity.verses.VerseNumberAndText
 
 @Composable
 fun VerseCollectionEditScreen(
+    onAddVerse: () -> Unit,
     onBackPress: () -> Unit,
     collectionName: String,
     verseCollectionEditViewModel: VerseCollectionEditViewModel = viewModel()
 ) {
-    LaunchedEffect(Unit) { verseCollectionEditViewModel.getVerseCollection(collectionName) }
+    LaunchedEffect(Unit) {
+        verseCollectionEditViewModel.loadContent(collectionName)
+    }
     val uiState by verseCollectionEditViewModel.uiState.collectAsState()
 
     when (uiState) {
@@ -81,6 +85,7 @@ fun VerseCollectionEditScreen(
                         verse = verse
                     )
                 },
+                onAddVerse = onAddVerse,
                 onBackPress = onBackPress,
                 modifier = Modifier.fillMaxSize()
             )
@@ -104,7 +109,8 @@ fun VerseCollectionEditScreen(
         VerseCollectionEditViewModel.UiState.NoVersesAvailable -> {
             AppTheme {
                 Scaffold(
-                    topBar = { TopBar(collectionName = collectionName, onBackPress = onBackPress) }
+                    topBar = { TopBar(collectionName = collectionName, onBackPress = onBackPress) },
+                    floatingActionButton = { AddVerseFAB(onAddVerse) }
                 ) { innerPadding ->
                     Box(
                         modifier = Modifier
@@ -130,6 +136,7 @@ fun RootView(
     versesNotInCollection: List<Verse>,
     onAddVerseToCollection: (Verse) -> Unit,
     onRemoveVerseFromCollection: (Verse) -> Unit,
+    onAddVerse: () -> Unit,
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -140,6 +147,9 @@ fun RootView(
                     collectionName = verseCollection.name,
                     onBackPress = onBackPress
                 )
+            },
+            floatingActionButton = {
+                AddVerseFAB(onAddVerse)
             },
             modifier = modifier
         ) { innerPadding ->
@@ -168,6 +178,16 @@ private fun TopBar(
             BackButton(onBackPress = onBackPress)
         }
     )
+}
+
+@Composable
+private fun AddVerseFAB(onAddVerse: () -> Unit) {
+    FloatingActionButton(onClick = onAddVerse) {
+        Icon(
+            painter = painterResource(R.drawable.icon_plus),
+            contentDescription = stringResource(R.string.content_description_add_verse)
+        )
+    }
 }
 
 @Composable

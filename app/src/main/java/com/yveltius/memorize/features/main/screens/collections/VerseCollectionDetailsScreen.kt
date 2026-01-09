@@ -292,31 +292,6 @@ private fun DeleteVerseCollectionAlertDialog(
     )
 }
 
-@Composable
-private fun FailedToLoadVerseCollection(
-    verseCollectionName: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(modifier = modifier) {
-        Column(
-            modifier = Modifier.align(alignment = Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = stringResource(
-                    R.string.collection_details_failed_to_get_collection,
-                    verseCollectionName
-                )
-            )
-            Button(onClick = onRetry) {
-                Text(text = stringResource(R.string.collection_details_button_retry))
-            }
-        }
-    }
-}
-
 @Preview
 @Composable
 private fun EmptyContentPreview() {
@@ -330,18 +305,6 @@ private fun EmptyContentPreview() {
             onBackPress = {},
             onDeleteCollection = {},
             failedToDeleteCollection = false
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun FailedToLoadVerseCollectionPreview() {
-    AppTheme {
-        FailedToLoadVerseCollection(
-            verseCollectionName = "My Collection",
-            onRetry = {},
-            modifier = Modifier.fillMaxSize()
         )
     }
 }
@@ -362,7 +325,7 @@ private val verseForPreviews = Verse(
     tags = listOf("Discipleship Verses", "Obedience to Christ", "Worry", "Territory", "Rererepeat")
 )
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun VerseViewPreview() {
     VerseView(

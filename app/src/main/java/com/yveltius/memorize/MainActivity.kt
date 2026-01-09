@@ -98,6 +98,7 @@ class MainActivity : ComponentActivity() {
                     val collectionEdit = backStackEntry.toRoute<CollectionEdit>()
 
                     VerseCollectionEditScreen(
+                        onAddVerse = { navController.navigate(route = AddVerse) },
                         onBackPress = { navController.navigateUp() },
                         collectionName = collectionEdit.collectionName
                     )
